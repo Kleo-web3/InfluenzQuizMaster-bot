@@ -8,6 +8,10 @@
   ],
   "routes": [
     {
+      "src": "/bot.*",
+      "dest": "index.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "index.js"
     }
