@@ -4,44 +4,16 @@ const kv = require('@vercel/kv');
 const http = require('http');
 
 const token = '8198315538:AAEuudupt-LwuF48PQvZ4Nmx9n9fFMVWpLA';
-const groupId = '-1002288817447'; // Added the negative sign as Telegram group IDs are typically negative
+const groupId = '-1002288817447';
 const groupName = 'Influenz Education';
 const questions = require('./questions.json');
 
-// Initialize bot with webhooks (no polling)
+// Initialize bot with webhooks
 const bot = new TelegramBot(token, { polling: false });
 
-// Vercel deployment URL
-const webhookUrl = 'https://influenzquizmaster-bot-kleo-web3.vercel.app';
-
 // Set webhook
-bot.setWebHook(`${webhookUrl}/bot${token}`);
-
-// Create an HTTP server to handle webhook requests
-const server = http.createServer((req, res) => {
-  if (req.method === 'POST' && req.url === `/bot${token}`) {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-    req.on('end', () => {
-      const update = JSON.parse(body);
-      bot.processUpdate(update);
-      res.writeHead(200);
-      res.end('OK');
-    });
-  } else {
-    res.writeHead(200);
-    res.end('Bot is running!');
-  }
-});
-
-// Listen on Vercel-assigned port
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('Bot is running...');
-});
+const webhookUrl = 'https://influenzquizmaster-bot-kleo-web3.vercel.app/api/webhook';
+bot.setWebHook(webhookUrl);
 
 // Command handlers
 bot.onText(/\/start/, (msg) => {
@@ -97,4 +69,16 @@ cron.schedule('* * * * *', () => {
       bot.sendMessage(groupId, `Here’s the question: *${question.question}*\nReply with your answer!`);
     }, 30 * 60 * 1000);
   }
+});
+
+// HTTP server for health check
+const server = http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end('Bot is running!');
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log('Bot is running...');
 });
