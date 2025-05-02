@@ -7,7 +7,6 @@
       "build": "npm install"
     },
     "dependencies": {
-      "@vercel/kv": "^2.0.0",
       "dotenv": "^16.4.5",
       "node-cron": "^3.0.3",
       "node-telegram-bot-api": "^0.66.0"
