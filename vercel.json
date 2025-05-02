@@ -8,12 +8,20 @@
     {
       "src": "api/webhook.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/cron.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/webhook",
       "dest": "/api/webhook.js"
+    },
+    {
+      "src": "/api/cron",
+      "dest": "/api/cron.js"
     },
     {
       "src": "/(.*)",

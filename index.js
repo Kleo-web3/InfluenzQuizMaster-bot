@@ -1,6 +1,5 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
-const cron = require('node-cron');
 const kv = require('@vercel/kv');
 const questions = require('./questions.json');
 
@@ -11,20 +10,31 @@ const groupName = 'Influenz Education';
 // Initialize bot with polling
 const bot = new TelegramBot(token, { polling: true });
 
+console.log('Bot started with polling');
+
+// Handle polling errors
+bot.on('polling_error', (error) => {
+  console.error('Polling error:', error.message);
+});
+
 // Command handlers
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id.toString();
   if (chatId === groupId) {
-    bot.sendMessage(groupId, `Welcome to ${groupName}! 🎉 I’m @InfluenzQuizMaster_bot...`);
-    console.log('Sent /start response');
+    bot.sendMessage(groupId, `Welcome to ${groupName}! 🎉 I’m @InfluenzQuizMaster_bot...`)
+      .then(() => console.log('Sent /start response'))
+      .catch((err) => console.error('Error sending /start:', err.message));
+  } else {
+    console.log(`Ignored /start from chat ${chatId}`);
   }
 });
 
 bot.onText(/\/help/, (msg) => {
   const chatId = msg.chat.id.toString();
   if (chatId === groupId) {
-    bot.sendMessage(groupId, "Commands:\n/start - Start the bot\n/help - Show commands\n/checkscore - Check your score");
-    console.log('Sent /help response');
+    bot.sendMessage(groupId, "Commands:\n/start - Start the bot\n/help - Show commands\n/checkscore - Check your score")
+      .then(() => console.log('Sent /help response'))
+      .catch((err) => console.error('Error sending /help:', err.message));
   }
 });
 
@@ -33,9 +43,13 @@ bot.onText(/\/checkscore/, async (msg) => {
   if (chatId === groupId) {
     const userId = msg.from.id;
     const username = msg.from.username || msg.from.first_name;
-    const score = (await kv.get(`score:${userId}`)) || 0;
-    bot.sendMessage(groupId, `@${username}, you have ${score} points! Keep answering to earn more. 🏆`);
-    console.log(`Sent /checkscore response for ${username}: ${score} points`);
+    try {
+      const score = (await kv.get(`score:${userId}`)) || 0;
+      await bot.sendMessage(groupId, `@${username}, you have ${score} points! Keep answering to earn more. 🏆`);
+      console.log(`Sent /checkscore response for ${username}: ${score} points`);
+    } catch (err) {
+      console.error('Error in /checkscore:', err.message);
+    }
   }
 });
 
@@ -47,37 +61,19 @@ bot.on('message', async (msg) => {
     const username = msg.from.username || msg.from.first_name;
     const answer = msg.text.toLowerCase().trim();
 
-    if (answer === global.currentQuestion.answer.toLowerCase()) {
-      const score = (await kv.get(`score:${userId}`)) || 0;
-      await kv.set(`score:${userId}`, score + 1);
-      bot.sendMessage(groupId, `Nice one, @${username}! 🎉 That’s correct. You now have ${score + 1} points.`);
-      global.currentQuestion = null;
-      console.log(`Correct answer from ${username}, new score: ${score + 1}`);
-    } else {
-      console.log(`Incorrect answer from ${username}: ${answer}`);
+    try {
+      if (answer === global.currentQuestion.answer.toLowerCase()) {
+        const score = (await kv.get(`score:${userId}`)) || 0;
+        await kv.set(`score:${userId}`, score + 1);
+        await bot.sendMessage(groupId, `Nice one, @${username}! 🎉 That’s correct. You now have ${score + 1} points.`);
+        global.currentQuestion = null;
+        console.log(`Correct answer from ${username}, new score: ${score + 1}`);
+      } else {
+        console.log(`Incorrect answer from ${username}: ${answer}`);
+      }
+    } catch (err) {
+      console.error('Error handling answer:', err.message);
     }
-  }
-});
-
-// Schedule questions
-cron.schedule('* * * * *', async () => {
-  console.log('Cron job triggered');
-  const now = new Date();
-  const day = now.toLocaleString('en-US', { weekday: 'long', timeZone: 'UTC' });
-  const time = now.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
-
-  console.log(`Checking for question: Day=${day}, Time=${time}`);
-  const question = questions.find(q => q.day === day && q.time === time);
-  if (question) {
-    console.log(`Found question: ${question.question}`);
-    await bot.sendMessage(groupId, `🔔 *Announcement*: A new question will be posted in 30 minutes! Get ready.`);
-    setTimeout(async () => {
-      global.currentQuestion = question;
-      await bot.sendMessage(groupId, `Here’s the question: *${question.question}*\nReply with your answer!`);
-      console.log(`Posted question: ${question.question}`);
-    }, 30 * 60 * 1000);
-  } else {
-    console.log('No question found for this time');
   }
 });
 
