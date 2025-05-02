@@ -1,7 +1,7 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const cron = require('node-cron');
-const kv = require('@vercel/kv');
+const fs = require('fs');
 const http = require('http');
 const questions = require('./questions.json');
 
@@ -18,6 +18,18 @@ console.log('Bot started with polling');
 bot.on('polling_error', (error) => {
   console.error('Polling error:', error.message);
 });
+
+// Load or initialize scores
+const scoresFile = 'scores.json';
+let scores = {};
+if (fs.existsSync(scoresFile)) {
+  scores = JSON.parse(fs.readFileSync(scoresFile));
+}
+
+// Save scores to file
+function saveScores() {
+  fs.writeFileSync(scoresFile, JSON.stringify(scores, null, 2));
+}
 
 // Command handlers
 bot.onText(/\/start/, (msg) => {
@@ -45,13 +57,9 @@ bot.onText(/\/checkscore/, async (msg) => {
   if (chatId === groupId) {
     const userId = msg.from.id;
     const username = msg.from.username || msg.from.first_name;
-    try {
-      const score = (await kv.get(`score:${userId}`)) || 0;
-      await bot.sendMessage(groupId, `@${username}, you have ${score} points! Keep answering to earn more. 🏆`);
-      console.log(`Sent /checkscore response for ${username}: ${score} points`);
-    } catch (err) {
-      console.error('Error in /checkscore:', err.message);
-    }
+    const score = scores[userId] || 0;
+    await bot.sendMessage(groupId, `@${username}, you have ${score} points! Keep answering to earn more. 🏆`);
+    console.log(`Sent /checkscore response for ${username}: ${score} points`);
   }
 });
 
@@ -63,18 +71,14 @@ bot.on('message', async (msg) => {
     const username = msg.from.username || msg.from.first_name;
     const answer = msg.text.toLowerCase().trim();
 
-    try {
-      if (answer === global.currentQuestion.answer.toLowerCase()) {
-        const score = (await kv.get(`score:${userId}`)) || 0;
-        await kv.set(`score:${userId}`, score + 1);
-        await bot.sendMessage(groupId, `Nice one, @${username}! 🎉 That’s correct. You now have ${score + 1} points.`);
-        global.currentQuestion = null;
-        console.log(`Correct answer from ${username}, new score: ${score + 1}`);
-      } else {
-        console.log(`Incorrect answer from ${username}: ${answer}`);
-      }
-    } catch (err) {
-      console.error('Error handling answer:', err.message);
+    if (answer === global.currentQuestion.answer.toLowerCase()) {
+      scores[userId] = (scores[userId] || 0) + 1;
+      saveScores();
+      await bot.sendMessage(groupId, `Nice one, @${username}! 🎉 That’s correct. You now have ${scores[userId]} points.`);
+      global.currentQuestion = null;
+      console.log(`Correct answer from ${username}, new score: ${scores[userId]}`);
+    } else {
+      console.log(`Incorrect answer from ${username}: ${answer}`);
     }
   }
 });
