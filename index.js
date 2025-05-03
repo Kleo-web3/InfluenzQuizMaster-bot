@@ -83,10 +83,13 @@ bot.on('message', async (msg) => {
   }
 });
 
-// Schedule questions
+// Track announced questions
+let announcedQuestions = [];
+
+// Schedule announcement
 cron.schedule('* * * * *', async () => {
   try {
-    console.log('Cron job triggered at ' + new Date().toISOString());
+    console.log('Announcement cron triggered at ' + new Date().toISOString());
     const now = new Date();
     const day = now.toLocaleString('en-US', { weekday: 'long', timeZone: 'UTC' });
     const time = now.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
@@ -99,21 +102,56 @@ cron.schedule('* * * * *', async () => {
     });
 
     if (question) {
-      console.log(`Found question: ${question.question}`);
+      console.log(`Found question for announcement: ${question.question}`);
       await bot.sendMessage(groupId, `🔔 *Announcement*: A new question will be posted in 30 minutes! Get ready.`)
-        .then(() => console.log('Sent announcement'))
+        .then(() => {
+          console.log('Sent announcement');
+          announcedQuestions.push({ ...question, announceTime: time });
+        })
         .catch((err) => console.error('Error sending announcement:', err.message));
-      setTimeout(async () => {
-        global.currentQuestion = question;
-        await bot.sendMessage(groupId, `Here’s the question: *${question.question}*\nReply with your answer!`)
-          .then(() => console.log(`Posted question: ${question.question}`))
-          .catch((err) => console.error('Error posting question:', err.message));
-      }, 30 * 60 * 1000);
     } else {
-      console.log('No question found for this time');
+      console.log('No question found for announcement');
     }
   } catch (err) {
-    console.error('Cron job error:', err.message);
+    console.error('Announcement cron error:', err.message);
+  }
+});
+
+// Schedule question posting
+cron.schedule('* * * * *', async () => {
+  try {
+    console.log('Question cron triggered at ' + new Date().toISOString());
+    const now = new Date();
+    const day = now.toLocaleString('en-US', { weekday: 'long', timeZone: 'UTC' });
+    const time = now.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
+
+    const announceTime = announcedQuestions.find(q => {
+      const [announceHour, announceMinute] = q.announceTime.split(':').map(Number);
+      const [currentHour, currentMinute] = time.split(':').map(Number);
+      const announceDate = new Date(now);
+      announceDate.setUTCHours(announceHour, announceMinute);
+      const questionTime = new Date(announceDate.getTime() + 30 * 60 * 1000);
+      const questionTimeStr = questionTime.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
+      const matches = q.day === day && questionTimeStr === time;
+      console.log(`Checking announced question: Day=${q.day}, AnnounceTime=${q.announceTime}, QuestionTime=${questionTimeStr}, Matches=${matches}`);
+      return matches;
+    });
+
+    if (announceTime) {
+      const question = announceTime;
+      console.log(`Found question to post: ${question.question}`);
+      global.currentQuestion = question;
+      await bot.sendMessage(groupId, `Here’s the question: *${question.question}*\nReply with your answer!`)
+        .then(() => {
+          console.log(`Posted question: ${question.question}`);
+          announcedQuestions = announcedQuestions.filter(q => q !== question);
+        })
+        .catch((err) => console.error('Error posting question:', err.message));
+    } else {
+      console.log('No question to post at this time');
+    }
+  } catch (err) {
+    console.error('Question cron error:', err.message);
   }
 });
 
