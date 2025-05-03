@@ -85,23 +85,35 @@ bot.on('message', async (msg) => {
 
 // Schedule questions
 cron.schedule('* * * * *', async () => {
-  console.log('Cron job triggered');
-  const now = new Date();
-  const day = now.toLocaleString('en-US', { weekday: 'long', timeZone: 'UTC' });
-  const time = now.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
+  try {
+    console.log('Cron job triggered at ' + new Date().toISOString());
+    const now = new Date();
+    const day = now.toLocaleString('en-US', { weekday: 'long', timeZone: 'UTC' });
+    const time = now.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
 
-  console.log(`Checking for question: Day=${day}, Time=${time}`);
-  const question = questions.find(q => q.day === day && q.time === time);
-  if (question) {
-    console.log(`Found question: ${question.question}`);
-    await bot.sendMessage(groupId, `🔔 *Announcement*: A new question will be posted in 30 minutes! Get ready.`);
-    setTimeout(async () => {
-      global.currentQuestion = question;
-      await bot.sendMessage(groupId, `Here’s the question: *${question.question}*\nReply with your answer!`);
-      console.log(`Posted question: ${question.question}`);
-    }, 30 * 60 * 1000);
-  } else {
-    console.log('No question found for this time');
+    console.log(`Checking questions: Day=${day}, Time=${time}, Questions=${JSON.stringify(questions)}`);
+    const question = questions.find(q => {
+      const matches = q.day === day && q.time === time;
+      console.log(`Checking question: Day=${q.day}, Time=${q.time}, Matches=${matches}`);
+      return matches;
+    });
+
+    if (question) {
+      console.log(`Found question: ${question.question}`);
+      await bot.sendMessage(groupId, `🔔 *Announcement*: A new question will be posted in 30 minutes! Get ready.`)
+        .then(() => console.log('Sent announcement'))
+        .catch((err) => console.error('Error sending announcement:', err.message));
+      setTimeout(async () => {
+        global.currentQuestion = question;
+        await bot.sendMessage(groupId, `Here’s the question: *${question.question}*\nReply with your answer!`)
+          .then(() => console.log(`Posted question: ${question.question}`))
+          .catch((err) => console.error('Error posting question:', err.message));
+      }, 30 * 60 * 1000);
+    } else {
+      console.log('No question found for this time');
+    }
+  } catch (err) {
+    console.error('Cron job error:', err.message);
   }
 });
 
