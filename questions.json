@@ -1,8 +1,11 @@
 [
   {
-    "day": "Monday",
-    "time": "10:14",
-    "question": "What is the primary goal of a trader? A) To minimize losses B) To maximize profits C) To follow market trends D) To predict market movements",
-    "answer": "B"
+    "id": "test1",
+    "text": "What is the capital of Nigeria?",
+    "options": ["A) Lagos", "B) Abuja", "C) Kano"],
+    "correct": "B",
+    "schedule": "2025-05-05T12:55:00+01:00",
+    "duration": 300,
+    "sent": false
   }
 ]
