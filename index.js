@@ -35,7 +35,7 @@ function saveScores() {
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id.toString();
   if (chatId === groupId) {
-    bot.sendMessage(groupId, `Welcome to ${groupName}! 🎉 I’m @InfluenzQuizMaster_bot...`)
+    bot.sendMessage(groupId, `Welcome to ${groupName}! 🎉 I’m @InfluenzQuizMaster_bot. Use /help for commands.`)
       .then(() => console.log('Sent /start response'))
       .catch((err) => console.error('Error sending /start:', err.message));
   } else {
@@ -63,28 +63,34 @@ bot.onText(/\/checkscore/, async (msg) => {
   }
 });
 
+// Track active questions and winners
+let activeQuestions = [];
+let announcedQuestions = [];
+
 // Answer handling
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id.toString();
-  if (chatId === groupId && global.currentQuestion && msg.text && !msg.text.startsWith('/')) {
+  if (chatId === groupId && activeQuestions.length > 0 && msg.text && !msg.text.startsWith('/')) {
     const userId = msg.from.id;
     const username = msg.from.username || msg.from.first_name;
-    const answer = msg.text.toLowerCase().trim();
+    const answer = msg.text.toUpperCase().trim();
 
-    if (answer === global.currentQuestion.answer.toLowerCase()) {
-      scores[userId] = (scores[userId] || 0) + 1;
-      saveScores();
-      await bot.sendMessage(groupId, `Nice one, @${username}! 🎉 That’s correct. You now have ${scores[userId]} points.`);
-      global.currentQuestion = null;
-      console.log(`Correct answer from ${username}, new score: ${scores[userId]}`);
-    } else {
-      console.log(`Incorrect answer from ${username}: ${answer}`);
+    for (let i = 0; i < activeQuestions.length; i++) {
+      const question = activeQuestions[i];
+      if (!question.answered && answer === question.answer.toUpperCase()) {
+        question.answered = true;
+        scores[userId] = (scores[userId] || 0) + 1;
+        saveScores();
+        await bot.sendMessage(groupId, `🎉 @${username} is the first to answer correctly! The answer is ${answer}. You now have ${scores[userId]} points.`);
+        console.log(`Correct answer from ${username} for question "${question.question}", new score: ${scores[userId]}`);
+        activeQuestions.splice(i, 1); // Remove answered question
+        break;
+      } else if (!question.answered) {
+        console.log(`Incorrect answer from ${username}: ${answer} for question "${question.question}"`);
+      }
     }
   }
 });
-
-// Track announced questions
-let announcedQuestions = [];
 
 // Schedule announcement
 cron.schedule('* * * * *', async () => {
@@ -95,18 +101,18 @@ cron.schedule('* * * * *', async () => {
     const time = now.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
 
     console.log(`Checking questions: Day=${day}, Time=${time}, Questions=${JSON.stringify(questions)}`);
-    const question = questions.find(q => {
+    const matchingQuestions = questions.filter(q => {
       const matches = q.day === day && q.time === time;
       console.log(`Checking question: Day=${q.day}, Time=${q.time}, Matches=${matches}`);
       return matches;
     });
 
-    if (question) {
-      console.log(`Found question for announcement: ${question.question}`);
-      await bot.sendMessage(groupId, `🔔 *Announcement*: A new question will be posted in 30 minutes! Get ready.`)
+    if (matchingQuestions.length > 0) {
+      console.log(`Found ${matchingQuestions.length} questions for announcement`);
+      await bot.sendMessage(groupId, `🔔 *Announcement*: ${matchingQuestions.length} new question${matchingQuestions.length > 1 ? 's' : ''} will be posted in 30 minutes! Get ready.`)
         .then(() => {
           console.log('Sent announcement');
-          announcedQuestions.push({ ...question, announceTime: time });
+          matchingQuestions.forEach(q => announcedQuestions.push({ ...q, announceTime: time }));
         })
         .catch((err) => console.error('Error sending announcement:', err.message));
     } else {
@@ -125,7 +131,7 @@ cron.schedule('* * * * *', async () => {
     const day = now.toLocaleString('en-US', { weekday: 'long', timeZone: 'UTC' });
     const time = now.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
 
-    const announceTime = announcedQuestions.find(q => {
+    const questionsToPost = announcedQuestions.filter(q => {
       const [announceHour, announceMinute] = q.announceTime.split(':').map(Number);
       const [currentHour, currentMinute] = time.split(':').map(Number);
       const announceDate = new Date(now);
@@ -137,16 +143,17 @@ cron.schedule('* * * * *', async () => {
       return matches;
     });
 
-    if (announceTime) {
-      const question = announceTime;
-      console.log(`Found question to post: ${question.question}`);
-      global.currentQuestion = question;
-      await bot.sendMessage(groupId, `Here’s the question: *${question.question}*\nReply with your answer!`)
-        .then(() => {
-          console.log(`Posted question: ${question.question}`);
-          announcedQuestions = announcedQuestions.filter(q => q !== question);
-        })
-        .catch((err) => console.error('Error posting question:', err.message));
+    if (questionsToPost.length > 0) {
+      for (const question of questionsToPost) {
+        console.log(`Found question to post: ${question.question}`);
+        activeQuestions.push({ ...question, answered: false });
+        await bot.sendMessage(groupId, `Here’s the question: *${question.question}*\nReply with the letter (A, B, C, or D)! First correct answer wins!`)
+          .then(() => {
+            console.log(`Posted question: ${question.question}`);
+          })
+          .catch((err) => console.error('Error posting question:', err.message));
+      }
+      announcedQuestions = announcedQuestions.filter(q => !questionsToPost.includes(q));
     } else {
       console.log('No question to post at this time');
     }
