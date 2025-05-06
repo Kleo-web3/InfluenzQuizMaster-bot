@@ -131,6 +131,8 @@ cron.schedule('* * * * *', async () => {
     const day = now.toLocaleString('en-US', { weekday: 'long', timeZone: 'UTC' });
     const time = now.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
 
+    console.log(`Current state: Day=${day}, Time=${time}, AnnouncedQuestions=${JSON.stringify(announcedQuestions)}`);
+
     const questionsToPost = announcedQuestions.filter(q => {
       const [announceHour, announceMinute] = q.announceTime.split(':').map(Number);
       const [currentHour, currentMinute] = time.split(':').map(Number);
@@ -138,8 +140,12 @@ cron.schedule('* * * * *', async () => {
       announceDate.setUTCHours(announceHour, announceMinute);
       const questionTime = new Date(announceDate.getTime() + 30 * 60 * 1000);
       const questionTimeStr = questionTime.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
-      const matches = q.day === day && questionTimeStr === time;
-      console.log(`Checking announced question: Day=${q.day}, AnnounceTime=${q.announceTime}, QuestionTime=${questionTimeStr}, Matches=${matches}`);
+      // Allow a 2-minute window to account for cron timing
+      const currentTimeInMs = now.getTime();
+      const questionTimeInMs = questionTime.getTime();
+      const timeDiffInMinutes = Math.abs((currentTimeInMs - questionTimeInMs) / (1000 * 60));
+      const matches = q.day === day && timeDiffInMinutes <= 2;
+      console.log(`Checking announced question: Day=${q.day}, AnnounceTime=${q.announceTime}, QuestionTime=${questionTimeStr}, TimeDiff=${timeDiffInMinutes}min, Matches=${matches}`);
       return matches;
     });
 
