@@ -146,7 +146,7 @@ cron.schedule('* * * * *', async () => {
     if (questionsToPost.length > 0) {
       for (const question of questionsToPost) {
         console.log(`Found question to post: ${question.question}`);
-        activeQuestions.push({ ...question, answered: false });
+        activeQuestions.push({ ...q, answered: false });
         await bot.sendMessage(groupId, `Here’s the question: *${question.question}*\nReply with the letter (A, B, C, or D)! First correct answer wins!`)
           .then(() => {
             console.log(`Posted question: ${question.question}`);
@@ -164,11 +164,17 @@ cron.schedule('* * * * *', async () => {
 
 // HTTP server for Render
 const server = http.createServer((req, res) => {
-  res.writeHead(200);
-  res.end('Bot is running!');
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Bot is running');
+    console.log('Health check endpoint accessed');
+  } else {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Bot is running!');
+  }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000; // Match Render's port
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
