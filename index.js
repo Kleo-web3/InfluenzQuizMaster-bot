@@ -146,7 +146,7 @@ cron.schedule('* * * * *', async () => {
     if (questionsToPost.length > 0) {
       for (const question of questionsToPost) {
         console.log(`Found question to post: ${question.question}`);
-        activeQuestions.push({ ...question, answered: false }); // Fixed: Changed 'q' to 'question'
+        activeQuestions.push({ ...question, answered: false });
         await bot.sendMessage(groupId, `Here’s the question: *${question.question}*\nReply with the letter (A, B, C, or D)! First correct answer wins!`)
           .then(() => {
             console.log(`Posted question: ${question.question}`);
@@ -161,12 +161,6 @@ cron.schedule('* * * * *', async () => {
     console.error('Question cron error:', err.message);
   }
 });
-
-setTimeout(() => {
-  const bot = new TelegramBot(BOT_TOKEN, { polling: true });
-  console.log("Bot started with polling");
-  // ... rest of your bot code ...
-}, 30000); // 30-second delay
 
 // HTTP server for Render
 const server = http.createServer((req, res) => {
