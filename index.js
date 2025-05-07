@@ -70,7 +70,7 @@ bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id.toString();
   if (chatId === groupId) {
     const userMessageId = msg.message_id;
-    const response = await bot.sendMessage(groupId, "Commands:\n/start - Start the bot\n/help - Show commands\n/checkscore - Check your score\n/leaderboard - View top 5 scorers");
+    const response = await bot.sendMessage(groupId, "Commands:\n/start - Start the bot\n/help - Show commands\n/checkscore - Check your score\n/leaderboard - View top 5 scorers\n/clearleaderboard - Clear scores (admin only)");
     await autoDeleteMessages(groupId, userMessageId, response.message_id);
     console.log('Sent /help response with auto-delete');
   }
@@ -81,7 +81,7 @@ bot.onText(/\/checkscore/, async (msg) => {
   if (chatId === groupId) {
     const userId = msg.from.id;
     const username = msg.from.username || msg.from.first_name;
-    const score = scores[userId] || 0;
+    const score = scores[userId]?.score || 0;
     const userMessageId = msg.message_id;
     const response = await bot.sendMessage(groupId, `@${username}, you have ${score} points! Keep answering to earn more. 🏆`);
     await autoDeleteMessages(groupId, userMessageId, response.message_id);
@@ -93,13 +93,22 @@ bot.onText(/\/leaderboard/, async (msg) => {
   const chatId = msg.chat.id.toString();
   if (chatId === groupId) {
     const userMessageId = msg.message_id;
-    const leaderboard = Object.entries(scores)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([userId, score], index) => `${index + 1}. @${scores[userId]?.username || 'Unknown'} - ${score} points`)
-      .join('\n');
-    const message = leaderboard ? `🏆 *Leaderboard (Top 5)* 🏆\n${leaderboard}` : '🏆 *Leaderboard (Top 5)* 🏆\nNo scores yet!';
-    const response = await bot.sendMessage(groupId, message);
+    const topScores = Object.entries(scores)
+      .sort((a, b) => b[1].score - a[1].score)
+      .slice(0, 5);
+    const maxUsernameLength = Math.min(
+      Math.max(...topScores.map(([_, data]) => (data.username || 'Unknown').length), 'Username'.length),
+      20
+    );
+    const leaderboard = topScores.map(([_, data]) => {
+      const username = (data.username || 'Unknown').substring(0, 20).padEnd(maxUsernameLength);
+      const points = data.score.toString().padStart(6);
+      return `${username} ${points}`;
+    });
+    const table = leaderboard.length > 0
+      ? `🏆 *Leaderboard (Top 5)* 🏆\n\`\`\`\nUsername${' '.repeat(maxUsernameLength - 8)} Points\n${leaderboard.join('\n')}\n\`\`\``
+      : '🏆 *Leaderboard (Top 5)* 🏆\nNo scores yet!';
+    const response = await bot.sendMessage(groupId, table, { parse_mode: 'Markdown' });
     await autoDeleteMessages(groupId, userMessageId, response.message_id);
     console.log('Sent /leaderboard response with auto-delete');
   }
@@ -137,8 +146,7 @@ bot.on('message', async (msg) => {
       const question = activeQuestions[i];
       if (!question.answered && answer === question.answer.toUpperCase()) {
         question.answered = true;
-        scores[userId] = (scores[userId] || 0) + 1;
-        scores[userId] = { score: scores[userId], username }; // Store username for leaderboard
+        scores[userId] = { score: (scores[userId]?.score || 0) + 1, username };
         saveScores();
         await bot.sendMessage(groupId, `🎉 @${username} is the first to answer correctly! The answer is ${answer}. You now have ${scores[userId].score} points.`);
         console.log(`Correct answer from ${username} for question "${question.question}", new score: ${scores[userId].score}`);
@@ -230,13 +238,22 @@ cron.schedule('* * * * *', async () => {
 cron.schedule('0 7,19 * * 6', async () => {
   try {
     console.log('Leaderboard cron triggered at ' + new Date().toISOString());
-    const leaderboard = Object.entries(scores)
+    const topScores = Object.entries(scores)
       .sort((a, b) => b[1].score - a[1].score)
-      .slice(0, 5)
-      .map(([userId, data], index) => `${index + 1}. @${data.username || 'Unknown'} - ${data.score} points`)
-      .join('\n');
-    const message = leaderboard ? `🏆 *Leaderboard (Top 5)* 🏆\n${leaderboard}` : '🏆 *Leaderboard (Top 5)* 🏆\nNo scores yet!';
-    await bot.sendMessage(groupId, message);
+      .slice(0, 5);
+    const maxUsernameLength = Math.min(
+      Math.max(...topScores.map(([_, data]) => (data.username || 'Unknown').length), 'Username'.length),
+      20
+    );
+    const leaderboard = topScores.map(([_, data]) => {
+      const username = (data.username || 'Unknown').substring(0, 20).padEnd(maxUsernameLength);
+      const points = data.score.toString().padStart(6);
+      return `${username} ${points}`;
+    });
+    const table = leaderboard.length > 0
+      ? `🏆 *Leaderboard (Top 5)* 🏆\n\`\`\`\nUsername${' '.repeat(maxUsernameLength - 8)} Points\n${leaderboard.join('\n')}\n\`\`\``
+      : '🏆 *Leaderboard (Top 5)* 🏆\nNo scores yet!';
+    await bot.sendMessage(groupId, table, { parse_mode: 'Markdown' });
     console.log('Posted scheduled leaderboard');
   } catch (err) {
     console.error('Leaderboard cron error:', err.message);
