@@ -1,8 +1,20 @@
 [
   {
     "day": "Wednesday",
-    "time": "13:30",
-    "question": "What is the primary goal of a trader? A) To minimize losses B) To maximize profits C) To follow market trends D) To predict market movements",
+    "time": "19:30",
+    "question": "What is risk management in trading? A) Maximizing profits B) Minimizing losses C) Predicting market movements D) Following market trends",
     "answer": "B"
+  },
+  {
+    "day": "Wednesday",
+    "time": "20:00",
+    "question": "What is a stop-loss order? A) An order to buy a security B) An order to sell a security at a specified price C) An order to limit losses D) An order to take profits",
+    "answer": "C"
+  },
+  {
+    "day": "Wednesday",
+    "time": "20:30",
+    "question": "What is leverage in trading? A) Using borrowed money to increase potential gains B) Reducing risk by diversifying investments C) Predicting market movements D) Following market trends",
+    "answer": "A"
   }
 ]
