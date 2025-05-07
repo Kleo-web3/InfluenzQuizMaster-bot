@@ -8,6 +8,7 @@ const questions = require('./questions.json');
 const token = process.env.BOT_TOKEN;
 const groupId = process.env.GROUP_ID;
 const groupName = 'Influenz Education';
+const adminUsername = '@kryptwriter';
 
 // Initialize bot with polling
 const bot = new TelegramBot(token, { polling: true });
@@ -31,6 +32,28 @@ function saveScores() {
   fs.writeFileSync(scoresFile, JSON.stringify(scores, null, 2));
 }
 
+// Format question for posting
+function formatQuestion(questionText) {
+  const [question, options] = questionText.split(' A) ');
+  const [optA, rest] = options.split(' B) ');
+  const [optB, rest2] = rest.split(' C) ');
+  const [optC, optD] = rest2.split(' D) ');
+  return `Here’s the question: *${question.trim()}*\nA) ${optA.trim()}\nB) ${optB.trim()}\nC) ${optC.trim()}\nD) ${optD.trim()}\nReply with the letter (A, B, C, or D)!`;
+}
+
+// Auto-delete messages after 2 minutes
+async function autoDeleteMessages(chatId, userMessageId, botMessageId) {
+  setTimeout(async () => {
+    try {
+      await bot.deleteMessage(chatId, userMessageId);
+      await bot.deleteMessage(chatId, botMessageId);
+      console.log(`Deleted messages: user=${userMessageId}, bot=${botMessageId}`);
+    } catch (err) {
+      console.error('Error deleting messages:', err.message);
+    }
+  }, 120000); // 2 minutes
+}
+
 // Command handlers
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id.toString();
@@ -43,12 +66,13 @@ bot.onText(/\/start/, (msg) => {
   }
 });
 
-bot.onText(/\/help/, (msg) => {
+bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id.toString();
   if (chatId === groupId) {
-    bot.sendMessage(groupId, "Commands:\n/start - Start the bot\n/help - Show commands\n/checkscore - Check your score")
-      .then(() => console.log('Sent /help response'))
-      .catch((err) => console.error('Error sending /help:', err.message));
+    const userMessageId = msg.message_id;
+    const response = await bot.sendMessage(groupId, "Commands:\n/start - Start the bot\n/help - Show commands\n/checkscore - Check your score\n/leaderboard - View top 5 scorers");
+    await autoDeleteMessages(groupId, userMessageId, response.message_id);
+    console.log('Sent /help response with auto-delete');
   }
 });
 
@@ -58,8 +82,42 @@ bot.onText(/\/checkscore/, async (msg) => {
     const userId = msg.from.id;
     const username = msg.from.username || msg.from.first_name;
     const score = scores[userId] || 0;
-    await bot.sendMessage(groupId, `@${username}, you have ${score} points! Keep answering to earn more. 🏆`);
-    console.log(`Sent /checkscore response for ${username}: ${score} points`);
+    const userMessageId = msg.message_id;
+    const response = await bot.sendMessage(groupId, `@${username}, you have ${score} points! Keep answering to earn more. 🏆`);
+    await autoDeleteMessages(groupId, userMessageId, response.message_id);
+    console.log(`Sent /checkscore response for ${username}: ${score} points with auto-delete`);
+  }
+});
+
+bot.onText(/\/leaderboard/, async (msg) => {
+  const chatId = msg.chat.id.toString();
+  if (chatId === groupId) {
+    const userMessageId = msg.message_id;
+    const leaderboard = Object.entries(scores)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([userId, score], index) => `${index + 1}. @${scores[userId]?.username || 'Unknown'} - ${score} points`)
+      .join('\n');
+    const message = leaderboard ? `🏆 *Leaderboard (Top 5)* 🏆\n${leaderboard}` : '🏆 *Leaderboard (Top 5)* 🏆\nNo scores yet!';
+    const response = await bot.sendMessage(groupId, message);
+    await autoDeleteMessages(groupId, userMessageId, response.message_id);
+    console.log('Sent /leaderboard response with auto-delete');
+  }
+});
+
+bot.onText(/\/clearleaderboard/, async (msg) => {
+  const chatId = msg.chat.id.toString();
+  if (chatId === groupId) {
+    const username = msg.from.username;
+    if (username === adminUsername) {
+      scores = {};
+      saveScores();
+      await bot.sendMessage(groupId, '🏆 Leaderboard cleared by admin! 🏆');
+      console.log(`Leaderboard cleared by ${username}`);
+    } else {
+      await bot.sendMessage(groupId, `@${username}, only admins can clear the leaderboard.`);
+      console.log(`Unauthorized /clearleaderboard attempt by ${username}`);
+    }
   }
 });
 
@@ -80,9 +138,10 @@ bot.on('message', async (msg) => {
       if (!question.answered && answer === question.answer.toUpperCase()) {
         question.answered = true;
         scores[userId] = (scores[userId] || 0) + 1;
+        scores[userId] = { score: scores[userId], username }; // Store username for leaderboard
         saveScores();
-        await bot.sendMessage(groupId, `🎉 @${username} is the first to answer correctly! The answer is ${answer}. You now have ${scores[userId]} points.`);
-        console.log(`Correct answer from ${username} for question "${question.question}", new score: ${scores[userId]}`);
+        await bot.sendMessage(groupId, `🎉 @${username} is the first to answer correctly! The answer is ${answer}. You now have ${scores[userId].score} points.`);
+        console.log(`Correct answer from ${username} for question "${question.question}", new score: ${scores[userId].score}`);
         activeQuestions.splice(i, 1); // Remove answered question
         break;
       } else if (!question.answered) {
@@ -140,7 +199,6 @@ cron.schedule('* * * * *', async () => {
       announceDate.setUTCHours(announceHour, announceMinute);
       const questionTime = new Date(announceDate.getTime() + 30 * 60 * 1000);
       const questionTimeStr = questionTime.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
-      // Allow a 2-minute window to account for cron timing
       const currentTimeInMs = now.getTime();
       const questionTimeInMs = questionTime.getTime();
       const timeDiffInMinutes = Math.abs((currentTimeInMs - questionTimeInMs) / (1000 * 60));
@@ -153,7 +211,7 @@ cron.schedule('* * * * *', async () => {
       for (const question of questionsToPost) {
         console.log(`Found question to post: ${question.question}`);
         activeQuestions.push({ ...question, answered: false });
-        await bot.sendMessage(groupId, `Here’s the question: *${question.question}*\nReply with the letter (A, B, C, or D)! First correct answer wins!`)
+        await bot.sendMessage(groupId, formatQuestion(question.question))
           .then(() => {
             console.log(`Posted question: ${question.question}`);
           })
@@ -168,6 +226,25 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
+// Schedule leaderboard posting on Saturdays at 8:00 AM and 8:00 PM WAT (7:00 AM and 7:00 PM UTC)
+cron.schedule('0 7,19 * * 6', async () => {
+  try {
+    console.log('Leaderboard cron triggered at ' + new Date().toISOString());
+    const leaderboard = Object.entries(scores)
+      .sort((a, b) => b[1].score - a[1].score)
+      .slice(0, 5)
+      .map(([userId, data], index) => `${index + 1}. @${data.username || 'Unknown'} - ${data.score} points`)
+      .join('\n');
+    const message = leaderboard ? `🏆 *Leaderboard (Top 5)* 🏆\n${leaderboard}` : '🏆 *Leaderboard (Top 5)* 🏆\nNo scores yet!';
+    await bot.sendMessage(groupId, message);
+    console.log('Posted scheduled leaderboard');
+  } catch (err) {
+    console.error('Leaderboard cron error:', err.message);
+  }
+}, {
+  timezone: 'Africa/Lagos' // WAT
+});
+
 // HTTP server for Render
 const server = http.createServer((req, res) => {
   if (req.url === '/health') {
@@ -180,7 +257,7 @@ const server = http.createServer((req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 10000; // Match Render's port
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
