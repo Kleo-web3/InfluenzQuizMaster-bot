@@ -21,6 +21,11 @@ let isPolling = false; // Prevent multiple polling instances
 // Load scores from file
 async function loadScores() {
   try {
+    const exists = await fs.access(SCORES_FILE).then(() => true).catch(() => false);
+    if (!exists) {
+      await fs.writeFile(SCORES_FILE, JSON.stringify({}, null, 2));
+      console.log('Created empty scores.json');
+    }
     const data = await fs.readFile(SCORES_FILE, 'utf8');
     scores = JSON.parse(data) || {};
     console.log('Scores loaded successfully');
@@ -133,9 +138,16 @@ async function scheduleQuestions() {
 
 // Handle answers
 bot.on('text', async (ctx) => {
-  console.log(`Received message: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID || !currentQuestion) {
-    console.log('Ignoring message: Invalid chat, thread, or no current question');
+  console.log(`Received message: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
+  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
+    console.log(`Ignoring message: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
+    return;
+  }
+  if (!currentQuestion) {
+    console.log('Ignoring message: No current question active');
+    await ctx.reply('No active question right now. Wait for the next quiz!', {
+      message_thread_id: THREAD_ID
+    });
     return;
   }
 
@@ -186,26 +198,27 @@ bot.on('text', async (ctx) => {
 
 // Commands
 bot.command('start', async (ctx) => {
-  console.log(`Received /start, Chat ID: ${ctx.chat.id}`);
-  if (String(ctx.chat.id) === GROUP_ID) {
-    try {
-      await ctx.reply('Quiz bot started! Questions will be posted in the Discussion/Q and Zone topic.');
-      console.log('/start command processed successfully');
-    } catch (error) {
-      console.error('Error in /start:', error);
-    }
-  } else {
-    console.log('Ignoring /start: Not in GROUP_ID');
+  console.log(`Received /start, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
+  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
+    console.log(`Ignoring /start: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
+    return;
+  }
+  try {
+    await ctx.reply('Quiz bot started! Questions will be posted in the Discussion/Q and Zone topic.', {
+      message_thread_id: THREAD_ID
+    });
+    console.log('/start command processed successfully');
+  } catch (error) {
+    console.error('Error in /start:', error);
   }
 });
 
 bot.command('leaderboard', async (ctx) => {
-  console.log(`Received /leaderboard, Chat ID: ${ctx.chat.id}`);
-  if (String(ctx.chat.id) !== GROUP_ID) {
-    console.log('Ignoring /leaderboard: Not in GROUP_ID');
+  console.log(`Received /leaderboard, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
+  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
+    console.log(`Ignoring /leaderboard: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
     return;
   }
-
   try {
     const sortedScores = Object.values(scores)
       .sort((a, b) => b.points - a.points)
@@ -217,7 +230,10 @@ bot.command('leaderboard', async (ctx) => {
       message += `${s.username.padEnd(15)} ${s.points}\n`;
     });
 
-    const sentMessage = await ctx.reply(message, { parse_mode: 'Markdown' });
+    const sentMessage = await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      message_thread_id: THREAD_ID
+    });
     setTimeout(() => {
       bot.telegram.deleteMessage(GROUP_ID, sentMessage.message_id).catch(console.error);
     }, 2 * 60 * 1000); // Delete after 2 minutes
@@ -228,16 +244,17 @@ bot.command('leaderboard', async (ctx) => {
 });
 
 bot.command('checkscore', async (ctx) => {
-  console.log(`Received /checkscore, Chat ID: ${ctx.chat.id}`);
-  if (String(ctx.chat.id) !== GROUP_ID) {
-    console.log('Ignoring /checkscore: Not in GROUP_ID');
+  console.log(`Received /checkscore, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
+  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
+    console.log(`Ignoring /checkscore: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
     return;
   }
-
   try {
     const userId = ctx.from.id;
     const score = scores[userId]?.points || 0;
-    await ctx.reply(`Your current score is ${score} points.`);
+    await ctx.reply(`Your current score is ${score} points.`, {
+      message_thread_id: THREAD_ID
+    });
     console.log('/checkscore command processed successfully');
   } catch (error) {
     console.error('Error in /checkscore:', error);
@@ -245,16 +262,17 @@ bot.command('checkscore', async (ctx) => {
 });
 
 bot.command('clearleaderboard', async (ctx) => {
-  console.log(`Received /clearleaderboard, Chat ID: ${ctx.chat.id}, Username: ${ctx.from.username}`);
-  if (String(ctx.chat.id) !== GROUP_ID || ctx.from.username !== ADMIN_USERNAME) {
-    console.log('Ignoring /clearleaderboard: Not admin or not in GROUP_ID');
+  console.log(`Received /clearleaderboard, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}, Username: ${ctx.from.username}`);
+  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID || ctx.from.username !== ADMIN_USERNAME) {
+    console.log(`Ignoring /clearleaderboard: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}, Is admin: ${ctx.from.username === ADMIN_USERNAME}`);
     return;
   }
-
   try {
     scores = {};
     await saveScores();
-    await ctx.reply('Leaderboard cleared!');
+    await ctx.reply('Leaderboard cleared!', {
+      message_thread_id: THREAD_ID
+    });
     console.log('/clearleaderboard command processed successfully');
   } catch (error) {
     console.error('Error in /clearleaderboard:', error);
@@ -262,12 +280,11 @@ bot.command('clearleaderboard', async (ctx) => {
 });
 
 bot.command('help', async (ctx) => {
-  console.log(`Received /help, Chat ID: ${ctx.chat.id}`);
-  if (String(ctx.chat.id) !== GROUP_ID) {
-    console.log('Ignoring /help: Not in GROUP_ID');
+  console.log(`Received /help, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
+  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
+    console.log(`Ignoring /help: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
     return;
   }
-
   try {
     await ctx.reply(
       'Welcome to the Influenz Quiz Bot!\n' +
@@ -277,7 +294,8 @@ bot.command('help', async (ctx) => {
       '- Commands:\n' +
       '  /leaderboard - View top 5 scores\n' +
       '  /checkscore - Check your score\n' +
-      '  /help - Show this message'
+      '  /help - Show this message',
+      { message_thread_id: THREAD_ID }
     );
     console.log('/help command processed successfully');
   } catch (error) {
@@ -286,9 +304,9 @@ bot.command('help', async (ctx) => {
 });
 
 bot.command('testquestion', async (ctx) => {
-  console.log(`Received /testquestion, Chat ID: ${ctx.chat.id}, Username: ${ctx.from.username}`);
-  if (String(ctx.chat.id) !== GROUP_ID || ctx.from.username !== ADMIN_USERNAME) {
-    console.log('Ignoring /testquestion: Not admin or not in GROUP_ID');
+  console.log(`Received /testquestion, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}, Username: ${ctx.from.username}`);
+  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID || ctx.from.username !== ADMIN_USERNAME) {
+    console.log(`Ignoring /testquestion: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}, Is admin: ${ctx.from.username === ADMIN_USERNAME}`);
     return;
   }
   try {
