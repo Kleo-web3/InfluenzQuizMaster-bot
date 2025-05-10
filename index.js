@@ -23,7 +23,7 @@ async function loadScores() {
   try {
     const exists = await fs.access(SCORES_FILE).then(() => true).catch(() => false);
     if (!exists) {
-      await fs.writeFile(SCORES_FILE, JSON.stringify({}, null, 2));
+      await fs.writeFile(SCORES_FILE, JSON.stringify({}, null, 2), 'utf8');
       console.log('Created empty scores.json');
     }
     const data = await fs.readFile(SCORES_FILE, 'utf8');
@@ -33,7 +33,7 @@ async function loadScores() {
     console.error('Error loading scores:', error);
     if (error instanceof SyntaxError) {
       console.log('Invalid JSON in scores.json, resetting to empty object');
-      await fs.writeFile(SCORES_FILE, JSON.stringify({}, null, 2));
+      await fs.writeFile(SCORES_FILE, JSON.stringify({}, null, 2), 'utf8');
       scores = {};
     } else {
       scores = {};
@@ -44,7 +44,7 @@ async function loadScores() {
 // Save scores to file
 async function saveScores() {
   try {
-    await fs.writeFile(SCORES_FILE, JSON.stringify(scores, null, 2));
+    await fs.writeFile(SCORES_FILE, JSON.stringify(scores, null, 2), 'utf8');
     console.log('Scores saved successfully');
   } catch (error) {
     console.error('Error saving scores:', error);
@@ -145,14 +145,16 @@ async function scheduleQuestions() {
 // Handle answers
 bot.on('text', async (ctx) => {
   console.log(`Received message: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
-    console.log(`Ignoring message: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
+  const chatId = String(ctx.chat.id);
+  const threadId = String(ctx.message.message_thread_id);
+  if (chatId !== GROUP_ID || threadId !== THREAD_ID) {
+    console.log(`Ignoring message: Chat ID match: ${chatId === GROUP_ID}, Thread ID match: ${threadId === THREAD_ID}`);
     return;
   }
 
-  // Skip commands (they're handled by bot.command)
+  // Explicitly skip commands
   if (ctx.message.text.startsWith('/')) {
-    console.log(`Skipping command: ${ctx.message.text}`);
+    console.log(`Skipping command in text handler: ${ctx.message.text}`);
     return;
   }
 
@@ -190,7 +192,6 @@ bot.on('text', async (ctx) => {
     scores[userId] = { username, points: 0 };
   }
 
-  // Check answer
   try {
     if (answer === currentQuestion.answer) {
       scores[userId].points += 1;
@@ -212,9 +213,11 @@ bot.on('text', async (ctx) => {
 
 // Commands
 bot.command('start', async (ctx) => {
-  console.log(`Received /start, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
-    console.log(`Ignoring /start: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
+  console.log(`Received /start, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
+  const chatId = String(ctx.chat.id);
+  const threadId = String(ctx.message.message_thread_id);
+  if (chatId !== GROUP_ID || threadId !== THREAD_ID) {
+    console.log(`Ignoring /start: Chat ID match: ${chatId === GROUP_ID}, Thread ID match: ${threadId === THREAD_ID}`);
     return;
   }
   try {
@@ -228,9 +231,11 @@ bot.command('start', async (ctx) => {
 });
 
 bot.command('leaderboard', async (ctx) => {
-  console.log(`Received /leaderboard, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
-    console.log(`Ignoring /leaderboard: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
+  console.log(`Received /leaderboard, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
+  const chatId = String(ctx.chat.id);
+  const threadId = String(ctx.message.message_thread_id);
+  if (chatId !== GROUP_ID || threadId !== THREAD_ID) {
+    console.log(`Ignoring /leaderboard: Chat ID match: ${chatId === GROUP_ID}, Thread ID match: ${threadId === THREAD_ID}`);
     return;
   }
   try {
@@ -258,9 +263,11 @@ bot.command('leaderboard', async (ctx) => {
 });
 
 bot.command('checkscore', async (ctx) => {
-  console.log(`Received /checkscore, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
-    console.log(`Ignoring /checkscore: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
+  console.log(`Received /checkscore, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
+  const chatId = String(ctx.chat.id);
+  const threadId = String(ctx.message.message_thread_id);
+  if (chatId !== GROUP_ID || threadId !== THREAD_ID) {
+    console.log(`Ignoring /checkscore: Chat ID match: ${chatId === GROUP_ID}, Thread ID match: ${threadId === THREAD_ID}`);
     return;
   }
   try {
@@ -276,9 +283,12 @@ bot.command('checkscore', async (ctx) => {
 });
 
 bot.command('clearleaderboard', async (ctx) => {
-  console.log(`Received /clearleaderboard, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}, Username: ${ctx.from.username}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID || ctx.from.username !== ADMIN_USERNAME) {
-    console.log(`Ignoring /clearleaderboard: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}, Is admin: ${ctx.from.username === ADMIN_USERNAME}`);
+  console.log(`Received /clearleaderboard, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}, Username: ${ctx.from.username}`);
+  const chatId = String(ctx.chat.id);
+  const threadId = String(ctx.message.message_thread_id);
+  const username = ctx.from.username?.toLowerCase() || '';
+  if (chatId !== GROUP_ID || threadId !== THREAD_ID || username !== ADMIN_USERNAME.toLowerCase()) {
+    console.log(`Ignoring /clearleaderboard: Chat ID match: ${chatId === GROUP_ID}, Thread ID match: ${threadId === THREAD_ID}, Is admin: ${username === ADMIN_USERNAME.toLowerCase()}`);
     return;
   }
   try {
@@ -294,9 +304,11 @@ bot.command('clearleaderboard', async (ctx) => {
 });
 
 bot.command('help', async (ctx) => {
-  console.log(`Received /help, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
-    console.log(`Ignoring /help: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
+  console.log(`Received /help, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
+  const chatId = String(ctx.chat.id);
+  const threadId = String(ctx.message.message_thread_id);
+  if (chatId !== GROUP_ID || threadId !== THREAD_ID) {
+    console.log(`Ignoring /help: Chat ID match: ${chatId === GROUP_ID}, Thread ID match: ${threadId === THREAD_ID}`);
     return;
   }
   try {
@@ -318,9 +330,12 @@ bot.command('help', async (ctx) => {
 });
 
 bot.command('testquestion', async (ctx) => {
-  console.log(`Received /testquestion, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}, Username: ${ctx.from.username}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID || ctx.from.username !== ADMIN_USERNAME) {
-    console.log(`Ignoring /testquestion: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}, Is admin: ${ctx.from.username === ADMIN_USERNAME}`);
+  console.log(`Received /testquestion, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}, Username: ${ctx.from.username}`);
+  const chatId = String(ctx.chat.id);
+  const threadId = String(ctx.message.message_thread_id);
+  const username = ctx.from.username?.toLowerCase() || '';
+  if (chatId !== GROUP_ID || threadId !== THREAD_ID || username !== ADMIN_USERNAME.toLowerCase()) {
+    console.log(`Ignoring /testquestion: Chat ID match: ${chatId === GROUP_ID}, Thread ID match: ${threadId === THREAD_ID}, Is admin: ${username === ADMIN_USERNAME.toLowerCase()}`);
     return;
   }
   try {
