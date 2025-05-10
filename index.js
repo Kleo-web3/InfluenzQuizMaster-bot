@@ -31,7 +31,13 @@ async function loadScores() {
     console.log('Scores loaded successfully');
   } catch (error) {
     console.error('Error loading scores:', error);
-    scores = {};
+    if (error instanceof SyntaxError) {
+      console.log('Invalid JSON in scores.json, resetting to empty object');
+      await fs.writeFile(SCORES_FILE, JSON.stringify({}, null, 2));
+      scores = {};
+    } else {
+      scores = {};
+    }
   }
 }
 
