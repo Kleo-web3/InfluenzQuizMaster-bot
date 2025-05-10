@@ -1,12 +1,6 @@
 [
   {
     "day": "Saturday",
-    "time": "17:30",
-    "question": "What is a stop-loss order? A) An order to buy a security B) An order to sell a security at a specified price C) An order to limit losses D) An order to take profits",
-    "answer": "C"
-  },
-  {
-    "day": "Saturday",
     "time": "18:00",
     "question": "What is leverage in trading? A) Using borrowed money to increase potential gains B) Reducing risk by diversifying investments C) Predicting market movements D) Following market trends",
     "answer": "A"

@@ -82,7 +82,15 @@ async function scheduleQuestions() {
   await loadQuestions();
   questions.forEach((q) => {
     const [hour, minute] = q.time.split(':').map(Number);
-    const cronTime = `${minute - 30} ${hour} * * ${q.day}`; // 30 min before
+    // Calculate announcement time (30 minutes before)
+    let announceMinute = minute - 30;
+    let announceHour = hour;
+    if (announceMinute < 0) {
+      announceMinute += 60; // e.g., -30 becomes 30
+      announceHour -= 1; // e.g., 18 becomes 17
+      if (announceHour < 0) announceHour += 24; // Handle midnight wrap-around
+    }
+    const cronTime = `${announceMinute} ${announceHour} * * ${q.day}`;
     cron.schedule(cronTime, () => postAnnouncement(q), { timezone: 'UTC' });
 
     const questionCronTime = `${minute} ${hour} * * ${q.day}`;
