@@ -150,12 +150,6 @@ bot.on('text', async (ctx) => {
     return;
   }
 
-  // Handle commands separately (they have their own handlers)
-  if (ctx.message.text.startsWith('/')) {
-    console.log(`Ignoring text message: ${ctx.message.text} is a command, handled by command handlers`);
-    return;
-  }
-
   // Check for active question
   if (!currentQuestion) {
     console.log('Ignoring message: No current question active');
