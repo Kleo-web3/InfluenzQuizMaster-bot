@@ -37,6 +37,7 @@ async function loadQuestions() {
   try {
     const data = await fs.readFile(QUESTIONS_FILE, 'utf8');
     questions = JSON.parse(data);
+    console.log(`Loaded ${questions.length} questions:`, JSON.stringify(questions, null, 2));
   } catch (error) {
     console.error('Error loading questions:', error);
   }
@@ -63,6 +64,7 @@ function getCurrentDayTime() {
 
 // Post announcement 30 minutes before question
 async function postAnnouncement(question) {
+  console.log(`Posting announcement for question at ${question.time} UTC`);
   await bot.telegram.sendMessage(GROUP_ID, `Quiz question coming up in 30 minutes at ${question.time} UTC! Get ready!`, {
     message_thread_id: THREAD_ID
   });
@@ -70,6 +72,7 @@ async function postAnnouncement(question) {
 
 // Post question and set current question
 async function postQuestion(question) {
+  console.log(`Posting question at ${question.time} UTC: ${question.question}`);
   await bot.telegram.sendMessage(GROUP_ID, formatQuestion(question), {
     message_thread_id: THREAD_ID
   });
@@ -80,6 +83,7 @@ async function postQuestion(question) {
 // Schedule questions
 async function scheduleQuestions() {
   await loadQuestions();
+  console.log('Scheduling questions...');
   questions.forEach((q) => {
     const [hour, minute] = q.time.split(':').map(Number);
     // Calculate announcement time (30 minutes before)
@@ -91,31 +95,40 @@ async function scheduleQuestions() {
       if (announceHour < 0) announceHour += 24; // Handle midnight wrap-around
     }
     const cronTime = `${announceMinute} ${announceHour} * * ${q.day}`;
-    cron.schedule(cronTime, () => postAnnouncement(q), { timezone: 'UTC' });
-
     const questionCronTime = `${minute} ${hour} * * ${q.day}`;
+    console.log(`Scheduled announcement: ${cronTime}, Question: ${questionCronTime}`);
+    cron.schedule(cronTime, () => postAnnouncement(q), { timezone: 'UTC' });
     cron.schedule(questionCronTime, () => postQuestion(q), { timezone: 'UTC' });
   });
 }
 
 // Handle answers
 bot.on('text', async (ctx) => {
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID || !currentQuestion) return;
+  console.log(`Received message: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
+  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID || !currentQuestion) {
+    console.log('Ignoring message: Invalid chat, thread, or no current question');
+    return;
+  }
 
   const userId = ctx.from.id;
   const username = ctx.from.username || ctx.from.first_name;
   const answer = ctx.message.text.trim().toUpperCase();
 
-  if (!['A', 'B', 'C', 'D'].includes(answer)) return;
+  if (!['A', 'B', 'C', 'D'].includes(answer)) {
+    console.log(`Invalid answer: ${answer}`);
+    return;
+  }
 
   // Check if user has already submitted a first attempt for this question
   const attemptKey = `${userId}:${currentQuestion.question}`;
   if (firstAttempts.has(attemptKey)) {
+    console.log(`User ${username} already attempted: ${attemptKey}`);
     return; // Ignore subsequent attempts
   }
 
   // Record first attempt
   firstAttempts.set(attemptKey, answer);
+  console.log(`Recorded first attempt: ${username} -> ${answer}`);
 
   // Initialize user score
   if (!scores[userId]) {
@@ -129,22 +142,31 @@ bot.on('text', async (ctx) => {
     await ctx.reply(`Correct, ${username}! You've earned 1 point.`, {
       message_thread_id: THREAD_ID
     });
+    console.log(`Correct answer by ${username}, Points: ${scores[userId].points}`);
   } else {
     await ctx.reply(`Sorry, ${username}, that's incorrect. Try the next one!`, {
       message_thread_id: THREAD_ID
     });
+    console.log(`Incorrect answer by ${username}`);
   }
 });
 
 // Commands
 bot.command('start', async (ctx) => {
+  console.log(`Received /start, Chat ID: ${ctx.chat.id}`);
   if (String(ctx.chat.id) === GROUP_ID) {
     await ctx.reply('Quiz bot started! Questions will be posted in the Discussion/Q and Zone topic.');
+  } else {
+    console.log('Ignoring /start: Not in GROUP_ID');
   }
 });
 
 bot.command('leaderboard', async (ctx) => {
-  if (String(ctx.chat.id) !== GROUP_ID) return;
+  console.log(`Received /leaderboard, Chat ID: ${ctx.chat.id}`);
+  if (String(ctx.chat.id) !== GROUP_ID) {
+    console.log('Ignoring /leaderboard: Not in GROUP_ID');
+    return;
+  }
 
   const sortedScores = Object.values(scores)
     .sort((a, b) => b.points - a.points)
@@ -163,7 +185,11 @@ bot.command('leaderboard', async (ctx) => {
 });
 
 bot.command('checkscore', async (ctx) => {
-  if (String(ctx.chat.id) !== GROUP_ID) return;
+  console.log(`Received /checkscore, Chat ID: ${ctx.chat.id}`);
+  if (String(ctx.chat.id) !== GROUP_ID) {
+    console.log('Ignoring /checkscore: Not in GROUP_ID');
+    return;
+  }
 
   const userId = ctx.from.id;
   const score = scores[userId]?.points || 0;
@@ -171,7 +197,11 @@ bot.command('checkscore', async (ctx) => {
 });
 
 bot.command('clearleaderboard', async (ctx) => {
-  if (String(ctx.chat.id) !== GROUP_ID || ctx.from.username !== ADMIN_USERNAME) return;
+  console.log(`Received /clearleaderboard, Chat ID: ${ctx.chat.id}, Username: ${ctx.from.username}`);
+  if (String(ctx.chat.id) !== GROUP_ID || ctx.from.username !== ADMIN_USERNAME) {
+    console.log('Ignoring /clearleaderboard: Not admin or not in GROUP_ID');
+    return;
+  }
 
   scores = {};
   await saveScores();
@@ -179,7 +209,11 @@ bot.command('clearleaderboard', async (ctx) => {
 });
 
 bot.command('help', async (ctx) => {
-  if (String(ctx.chat.id) !== GROUP_ID) return;
+  console.log(`Received /help, Chat ID: ${ctx.chat.id}`);
+  if (String(ctx.chat.id) !== GROUP_ID) {
+    console.log('Ignoring /help: Not in GROUP_ID');
+    return;
+  }
 
   await ctx.reply(
     'Welcome to the Influenz Quiz Bot!\n' +
@@ -195,6 +229,7 @@ bot.command('help', async (ctx) => {
 
 // Weekly leaderboard on Saturday
 cron.schedule('0 7,19 * * 6', async () => {
+  console.log('Posting weekly leaderboard');
   const sortedScores = Object.values(scores)
     .sort((a, b) => b.points - a.points)
     .slice(0, 5);
