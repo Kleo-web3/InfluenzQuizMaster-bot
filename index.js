@@ -142,25 +142,25 @@ async function scheduleQuestions() {
   });
 }
 
-// Handle answers
+// Handle answers (non-commands only)
 bot.on('text', async (ctx) => {
-  console.log(`Received message: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
+  console.log(`Received text: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
   const chatId = String(ctx.chat.id);
   const threadId = String(ctx.message.message_thread_id);
   if (chatId !== GROUP_ID || threadId !== THREAD_ID) {
-    console.log(`Ignoring message: Chat ID match: ${chatId === GROUP_ID}, Thread ID match: ${threadId === THREAD_ID}`);
+    console.log(`Ignoring text: Chat ID match: ${chatId === GROUP_ID}, Thread ID match: ${threadId === THREAD_ID}`);
     return;
   }
 
-  // Explicitly skip commands
+  // Skip commands
   if (ctx.message.text.startsWith('/')) {
-    console.log(`Skipping command in text handler: ${ctx.message.text}`);
+    console.log(`Ignoring command in text handler: ${ctx.message.text}`);
     return;
   }
 
   // Check for active question
   if (!currentQuestion) {
-    console.log('Ignoring message: No current question active');
+    console.log('Ignoring text: No current question active');
     await ctx.reply('No active question right now. Wait for the next quiz!', {
       message_thread_id: THREAD_ID
     });
@@ -213,7 +213,7 @@ bot.on('text', async (ctx) => {
 
 // Commands
 bot.command('start', async (ctx) => {
-  console.log(`Received /start, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
+  console.log(`Processing /start, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
   const chatId = String(ctx.chat.id);
   const threadId = String(ctx.message.message_thread_id);
   if (chatId !== GROUP_ID || threadId !== THREAD_ID) {
@@ -231,7 +231,7 @@ bot.command('start', async (ctx) => {
 });
 
 bot.command('leaderboard', async (ctx) => {
-  console.log(`Received /leaderboard, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
+  console.log(`Processing /leaderboard, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
   const chatId = String(ctx.chat.id);
   const threadId = String(ctx.message.message_thread_id);
   if (chatId !== GROUP_ID || threadId !== THREAD_ID) {
@@ -263,7 +263,7 @@ bot.command('leaderboard', async (ctx) => {
 });
 
 bot.command('checkscore', async (ctx) => {
-  console.log(`Received /checkscore, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
+  console.log(`Processing /checkscore, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
   const chatId = String(ctx.chat.id);
   const threadId = String(ctx.message.message_thread_id);
   if (chatId !== GROUP_ID || threadId !== THREAD_ID) {
@@ -283,7 +283,7 @@ bot.command('checkscore', async (ctx) => {
 });
 
 bot.command('clearleaderboard', async (ctx) => {
-  console.log(`Received /clearleaderboard, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}, Username: ${ctx.from.username}`);
+  console.log(`Processing /clearleaderboard, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}, Username: ${ctx.from.username}`);
   const chatId = String(ctx.chat.id);
   const threadId = String(ctx.message.message_thread_id);
   const username = ctx.from.username?.toLowerCase() || '';
@@ -304,7 +304,7 @@ bot.command('clearleaderboard', async (ctx) => {
 });
 
 bot.command('help', async (ctx) => {
-  console.log(`Received /help, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
+  console.log(`Processing /help, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
   const chatId = String(ctx.chat.id);
   const threadId = String(ctx.message.message_thread_id);
   if (chatId !== GROUP_ID || threadId !== THREAD_ID) {
@@ -330,7 +330,7 @@ bot.command('help', async (ctx) => {
 });
 
 bot.command('testquestion', async (ctx) => {
-  console.log(`Received /testquestion, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}, Username: ${ctx.from.username}`);
+  console.log(`Processing /testquestion, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}, Username: ${ctx.from.username}`);
   const chatId = String(ctx.chat.id);
   const threadId = String(ctx.message.message_thread_id);
   const username = ctx.from.username?.toLowerCase() || '';
@@ -423,5 +423,10 @@ process.on('SIGTERM', async () => {
 const app = express();
 app.get('/', (req, res) => res.send('Bot is running'));
 app.listen(process.env.PORT || 10000, () => console.log(`Server running on port ${process.env.PORT || 10000}`));
+
+// Catch unhandled errors
+bot.catch((err, ctx) => {
+  console.error(`Encountered an error for ${ctx.updateType}:`, err);
+});
 
 startBot().catch(console.error);
