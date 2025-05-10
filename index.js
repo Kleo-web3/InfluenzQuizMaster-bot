@@ -150,6 +150,12 @@ bot.on('text', async (ctx) => {
     return;
   }
 
+  // Skip commands (they're handled by bot.command)
+  if (ctx.message.text.startsWith('/')) {
+    console.log(`Skipping command: ${ctx.message.text}`);
+    return;
+  }
+
   // Check for active question
   if (!currentQuestion) {
     console.log('Ignoring message: No current question active');
