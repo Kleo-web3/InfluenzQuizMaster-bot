@@ -347,8 +347,30 @@ async function startBot() {
   } catch (error) {
     console.error('Failed to start bot:', error);
     isPolling = false;
+    throw error;
   }
 }
+
+// Stop polling on process exit
+process.on('SIGINT', async () => {
+  console.log('Received SIGINT, stopping bot...');
+  if (isPolling) {
+    await bot.stop();
+    isPolling = false;
+    console.log('Bot stopped');
+  }
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('Received SIGTERM, stopping bot...');
+  if (isPolling) {
+    await bot.stop();
+    isPolling = false;
+    console.log('Bot stopped');
+  }
+  process.exit(0);
+});
 
 // Express server for Render
 const app = express();
