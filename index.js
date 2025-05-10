@@ -149,6 +149,14 @@ bot.on('text', async (ctx) => {
     console.log(`Ignoring message: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
     return;
   }
+
+  // Handle commands separately (they have their own handlers)
+  if (ctx.message.text.startsWith('/')) {
+    console.log(`Ignoring text message: ${ctx.message.text} is a command, handled by command handlers`);
+    return;
+  }
+
+  // Check for active question
   if (!currentQuestion) {
     console.log('Ignoring message: No current question active');
     await ctx.reply('No active question right now. Wait for the next quiz!', {
@@ -318,9 +326,9 @@ bot.command('testquestion', async (ctx) => {
   try {
     console.log('Posting test question');
     await postQuestion({
-      question: "Test question? A) A B) B C) C D) D",
-      answer: "C",
-      time: "now"
+      question: 'Test question? A) A B) B C) C D) D',
+      answer: 'C',
+      time: 'now'
     });
     console.log('/testquestion command processed successfully');
   } catch (error) {
