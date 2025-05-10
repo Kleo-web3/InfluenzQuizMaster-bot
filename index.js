@@ -16,6 +16,7 @@ let scores = {};
 let questions = [];
 let currentQuestion = null;
 let firstAttempts = new Map(); // Tracks first attempt per user per question
+let isPolling = false; // Prevent multiple polling instances
 
 // Load scores from file
 async function loadScores() {
@@ -251,10 +252,20 @@ cron.schedule('0 7,19 * * 6', async () => {
 
 // Start bot
 async function startBot() {
+  if (isPolling) {
+    console.log('Polling already active, skipping start');
+    return;
+  }
+  isPolling = true;
   await loadScores();
   await scheduleQuestions();
-  bot.launch({ dropPendingUpdates: true });
-  console.log('Bot started with polling');
+  try {
+    await bot.launch({ dropPendingUpdates: true });
+    console.log('Bot started with polling');
+  } catch (error) {
+    console.error('Failed to start bot:', error);
+    isPolling = false;
+  }
 }
 
 // Express server for Render
