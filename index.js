@@ -108,22 +108,15 @@ async function scheduleQuestions() {
 }
 
 // Handle answers
-bot.on('text', async (ctx) => {
-  console.log(`Received message: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Expected Chat ID: ${GROUP_ID}, Thread ID: ${ctx.message.message_thread_id}, Expected Thread ID: ${THREAD_ID}`);
+bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
+  console.log(`Received answer: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
   if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
-    console.log(`Ignoring message: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
+    console.log(`Ignoring answer: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
     return;
   }
 
-  // Skip commands
-  if (ctx.message.text.startsWith('/')) {
-    console.log(`Skipping command: ${ctx.message.text}`);
-    return;
-  }
-
-  // Check for active question
   if (!currentQuestion) {
-    console.log('Ignoring message: No current question active');
+    console.log('Ignoring answer: No current question active');
     await ctx.reply('No active question right now. Wait for the next quiz!', {
       message_thread_id: THREAD_ID
     });
@@ -133,11 +126,6 @@ bot.on('text', async (ctx) => {
   const userId = ctx.from.id;
   const username = ctx.from.username || ctx.from.first_name;
   const answer = ctx.message.text.trim().toUpperCase();
-
-  if (!['A', 'B', 'C', 'D'].includes(answer)) {
-    console.log(`Invalid answer: ${answer}`);
-    return;
-  }
 
   // Check if user has already submitted a first attempt
   const attemptKey = `${userId}:${currentQuestion.question}`;
@@ -174,128 +162,91 @@ bot.on('text', async (ctx) => {
   }
 });
 
-// Commands
-bot.command('start', async (ctx) => {
-  console.log(`Received /start, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
+// Handle commands
+bot.on('message', async (ctx) => {
+  if (!ctx.message.text || !ctx.message.text.startsWith('/')) {
+    console.log(`Ignoring non-command message: ${ctx.message.text || 'no text'}`);
+    return;
+  }
+
+  console.log(`Received command: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}, Username: ${ctx.from.username || ctx.from.first_name}`);
   if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
-    console.log(`Ignoring /start: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
+    console.log(`Ignoring command: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
     return;
   }
+
+  const command = ctx.message.text.split(' ')[0].toLowerCase().replace('/', '');
+
   try {
-    await ctx.reply('Quiz bot started! Questions will be posted in the Discussion/Q and Zone topic.', {
-      message_thread_id: THREAD_ID
-    });
-    console.log('/start command processed successfully');
+    if (command === 'start') {
+      await ctx.reply('Quiz bot started! Questions will be posted in the Discussion/Q and Zone topic.', {
+        message_thread_id: THREAD_ID
+      });
+      console.log('/start command processed successfully');
+    } else if (command === 'help') {
+      await ctx.reply(
+        'Welcome to the Influenz Quiz Bot!\n' +
+        '- Questions are posted in the Discussion/Q and Zone topic.\n' +
+        '- Reply with A, B, C, or D to answer.\n' +
+        '- Only your first answer per question counts.\n' +
+        '- Commands:\n' +
+        '  /leaderboard - View top 5 scores\n' +
+        '  /checkscore - Check your score\n' +
+        '  /help - Show this message',
+        { message_thread_id: THREAD_ID }
+      );
+      console.log('/help command processed successfully');
+    } else if (command === 'leaderboard') {
+      const sortedScores = Object.values(scores)
+        .sort((a, b) => b.points - a.points)
+        .slice(0, 5);
+      let message = '🏆 *Leaderboard (Top 5)* 🏆\n\n';
+      message += 'Username         Points\n';
+      sortedScores.forEach((s) => {
+        message += `${s.username.padEnd(15)} ${s.points}\n`;
+      });
+      const sentMessage = await ctx.reply(message, {
+        parse_mode: 'Markdown',
+        message_thread_id: THREAD_ID
+      });
+      setTimeout(() => {
+        bot.telegram.deleteMessage(GROUP_ID, sentMessage.message_id).catch(console.error);
+      }, 2 * 60 * 1000); // Delete after 2 minutes
+      console.log('/leaderboard command processed successfully');
+    } else if (command === 'checkscore') {
+      const userId = ctx.from.id;
+      const score = scores[userId]?.points || 0;
+      await ctx.reply(`Your current score is ${score} points.`, {
+        message_thread_id: THREAD_ID
+      });
+      console.log('/checkscore command processed successfully');
+    } else if (command === 'clearleaderboard') {
+      if (ctx.from.username !== ADMIN_USERNAME) {
+        console.log(`Ignoring /clearleaderboard: User ${ctx.from.username} is not admin`);
+        return;
+      }
+      scores = {};
+      await ctx.reply('Leaderboard cleared!', {
+        message_thread_id: THREAD_ID
+      });
+      console.log('/clearleaderboard command processed successfully');
+    } else if (command === 'testquestion') {
+      if (ctx.from.username !== ADMIN_USERNAME) {
+        console.log(`Ignoring /testquestion: User ${ctx.from.username} is not admin`);
+        return;
+      }
+      console.log('Posting test question');
+      await postQuestion({
+        question: 'Test question? A) A B) B C) C D) D',
+        answer: 'C',
+        time: 'now'
+      });
+      console.log('/testquestion command processed successfully');
+    } else {
+      console.log(`Unknown command: ${command}`);
+    }
   } catch (error) {
-    console.error('Error in /start:', error);
-  }
-});
-
-bot.command('leaderboard', async (ctx) => {
-  console.log(`Received /leaderboard, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
-    console.log(`Ignoring /leaderboard: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
-    return;
-  }
-  try {
-    const sortedScores = Object.values(scores)
-      .sort((a, b) => b.points - a.points)
-      .slice(0, 5);
-
-    let message = '🏆 *Leaderboard (Top 5)* 🏆\n\n';
-    message += 'Username         Points\n';
-    sortedScores.forEach((s) => {
-      message += `${s.username.padEnd(15)} ${s.points}\n`;
-    });
-
-    const sentMessage = await ctx.reply(message, {
-      parse_mode: 'Markdown',
-      message_thread_id: THREAD_ID
-    });
-    setTimeout(() => {
-      bot.telegram.deleteMessage(GROUP_ID, sentMessage.message_id).catch(console.error);
-    }, 2 * 60 * 1000); // Delete after 2 minutes
-    console.log('/leaderboard command processed successfully');
-  } catch (error) {
-    console.error('Error in /leaderboard:', error);
-  }
-});
-
-bot.command('checkscore', async (ctx) => {
-  console.log(`Received /checkscore, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
-    console.log(`Ignoring /checkscore: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
-    return;
-  }
-  try {
-    const userId = ctx.from.id;
-    const score = scores[userId]?.points || 0;
-    await ctx.reply(`Your current score is ${score} points.`, {
-      message_thread_id: THREAD_ID
-    });
-    console.log('/checkscore command processed successfully');
-  } catch (error) {
-    console.error('Error in /checkscore:', error);
-  }
-});
-
-bot.command('clearleaderboard', async (ctx) => {
-  console.log(`Received /clearleaderboard, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}, Username: ${ctx.from.username}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID || ctx.from.username !== ADMIN_USERNAME) {
-    console.log(`Ignoring /clearleaderboard: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}, Is admin: ${ctx.from.username === ADMIN_USERNAME}`);
-    return;
-  }
-  try {
-    scores = {};
-    await ctx.reply('Leaderboard cleared!', {
-      message_thread_id: THREAD_ID
-    });
-    console.log('/clearleaderboard command processed successfully');
-  } catch (error) {
-    console.error('Error in /clearleaderboard:', error);
-  }
-});
-
-bot.command('help', async (ctx) => {
-  console.log(`Received /help, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
-    console.log(`Ignoring /help: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
-    return;
-  }
-  try {
-    await ctx.reply(
-      'Welcome to the Influenz Quiz Bot!\n' +
-      '- Questions are posted in the Discussion/Q and Zone topic.\n' +
-      '- Reply with A, B, C, or D to answer.\n' +
-      '- Only your first answer per question counts.\n' +
-      '- Commands:\n' +
-      '  /leaderboard - View top 5 scores\n' +
-      '  /checkscore - Check your score\n' +
-      '  /help - Show this message',
-      { message_thread_id: THREAD_ID }
-    );
-    console.log('/help command processed successfully');
-  } catch (error) {
-    console.error('Error in /help:', error);
-  }
-});
-
-bot.command('testquestion', async (ctx) => {
-  console.log(`Received /testquestion, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}, Username: ${ctx.from.username}`);
-  if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID || ctx.from.username !== ADMIN_USERNAME) {
-    console.log(`Ignoring /testquestion: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}, Is admin: ${ctx.from.username === ADMIN_USERNAME}`);
-    return;
-  }
-  try {
-    console.log('Posting test question');
-    await postQuestion({
-      question: 'Test question? A) A B) B C) C D) D',
-      answer: 'C',
-      time: 'now'
-    });
-    console.log('/testquestion command processed successfully');
-  } catch (error) {
-    console.error('Error in /testquestion:', error);
+    console.error(`Error in command ${command}:`, error);
   }
 });
 
