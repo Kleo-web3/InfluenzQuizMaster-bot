@@ -9,13 +9,15 @@ const GROUP_ID = process.env.GROUP_ID || '-1002288817447';
 const THREAD_ID = '3'; // Discussion/Q and Zone topic
 const ADMIN_USERNAME = '@kryptwriter';
 const QUESTIONS_FILE = path.join(__dirname, 'questions.json');
+const SCORES_FILE = path.join(__dirname, 'scores.json');
 
-let scores = {}; // Store scores in memory
+let scores = {}; // Store scores in memory, synced with scores.json
 let questions = [];
 let currentQuestion = null;
 let firstAttempts = new Map(); // Tracks first attempt per user per question
 let firstCorrectUser = null; // Tracks first user to answer correctly
 let isPolling = false; // Prevent multiple polling instances
+let questionTimeout = null; // Tracks question timeout
 
 // Load questions from file
 async function loadQuestions() {
@@ -36,6 +38,37 @@ async function loadQuestions() {
   }
 }
 
+// Load scores from file
+async function loadScores() {
+  try {
+    const fs = require('fs').promises;
+    const exists = await fs.access(SCORES_FILE).then(() => true).catch(() => false);
+    if (!exists) {
+      console.log('scores.json does not exist, initializing empty scores');
+      scores = {};
+      await saveScores();
+      return;
+    }
+    const data = await fs.readFile(SCORES_FILE, 'utf8');
+    scores = JSON.parse(data);
+    console.log(`Loaded scores:`, JSON.stringify(scores, null, 2));
+  } catch (error) {
+    console.error('Error loading scores:', error);
+    scores = {};
+  }
+}
+
+// Save scores to file
+async function saveScores() {
+  try {
+    const fs = require('fs').promises;
+    await fs.writeFile(SCORES_FILE, JSON.stringify(scores, null, 2));
+    console.log('Scores saved successfully');
+  } catch (error) {
+    console.error('Error saving scores:', error);
+  }
+}
+
 // Format question for Telegram
 function formatQuestion(q) {
   return `Here’s the question: *${q.question.split(' A)')[0]}*\n` +
@@ -44,6 +77,17 @@ function formatQuestion(q) {
          `C) ${q.question.split(' C) ')[1].split(' D) ')[0]}\n` +
          `D) ${q.question.split(' D) ')[1]}\n` +
          `Reply with the letter (A, B, C, or D)!`;
+}
+
+// Get answer description
+function getAnswerDescription(q) {
+  const options = {
+    'A': q.question.split(' A) ')[1].split(' B) ')[0],
+    'B': q.question.split(' B) ')[1].split(' C) ')[0],
+    'C': q.question.split(' C) ')[1].split(' D) ')[0],
+    'D': q.question.split(' D) ')[1]
+  };
+  return options[q.answer];
 }
 
 // Get current day and time in UTC (WAT is UTC+1)
@@ -79,6 +123,19 @@ async function postQuestion(question) {
     firstAttempts.clear(); // Reset first attempts for new question
     firstCorrectUser = null; // Reset first correct user
     console.log('Question posted successfully');
+
+    // Set timeout to close question after 5 minutes
+    if (questionTimeout) clearTimeout(questionTimeout);
+    questionTimeout = setTimeout(async () => {
+      if (currentQuestion && currentQuestion.question === question.question) {
+        const answerDesc = getAnswerDescription(currentQuestion);
+        await bot.telegram.sendMessage(GROUP_ID, `Time’s up! The correct answer was ${currentQuestion.answer}: ${answerDesc}.`, {
+          message_thread_id: THREAD_ID
+        });
+        console.log(`Closed question: ${question.question}, Answer: ${currentQuestion.answer}`);
+        currentQuestion = null; // Close question
+      }
+    }, 5 * 60 * 1000); // 5 minutes
   } catch (error) {
     console.error('Error posting question:', error);
   }
@@ -150,6 +207,7 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
           scores[userId] = { username, points: 0 };
         }
         scores[userId].points += 1;
+        await saveScores(); // Save scores to file
         await ctx.reply(`Correct, ${username}! You're the first to answer correctly and earned 1 point!`, {
           message_thread_id: THREAD_ID
         });
@@ -185,19 +243,20 @@ bot.on('message', async (ctx) => {
     return;
   }
 
-  const command = ctx.message.text.split(' ')[0].toLowerCase().replace('/', '');
+  const commandText = ctx.message.text.split(' ')[0].toLowerCase().replace('/', '');
+  const args = ctx.message.text.split(' ').slice(1);
 
   try {
-    if (command === 'start') {
+    if (commandText === 'start') {
       await ctx.reply('Quiz bot started! Questions will be posted in the Discussion/Q and Zone topic.', {
         message_thread_id: THREAD_ID
       });
       console.log('/start command processed successfully');
-    } else if (command === 'help') {
+    } else if (commandText === 'help') {
       await ctx.reply(
         'Welcome to the Influenz Quiz Bot!\n' +
         '- Questions are posted in the Discussion/Q and Zone topic.\n' +
-        '- Reply with A, B, C, or D to answer.\n' +
+        '- Reply with A, B, C, or D to answer (5-minute time limit).\n' +
         '- Only the first correct answer earns a point.\n' +
         '- Commands:\n' +
         '  /leaderboard - View top 5 scores\n' +
@@ -206,7 +265,7 @@ bot.on('message', async (ctx) => {
         { message_thread_id: THREAD_ID }
       );
       console.log('/help command processed successfully');
-    } else if (command === 'leaderboard') {
+    } else if (commandText === 'leaderboard') {
       const sortedScores = Object.values(scores)
         .sort((a, b) => b.points - a.points)
         .slice(0, 5);
@@ -223,40 +282,55 @@ bot.on('message', async (ctx) => {
         bot.telegram.deleteMessage(GROUP_ID, sentMessage.message_id).catch(console.error);
       }, 2 * 60 * 1000); // Delete after 2 minutes
       console.log('/leaderboard command processed successfully');
-    } else if (command === 'checkscore') {
+    } else if (commandText === 'checkscore') {
       const userId = ctx.from.id;
       const score = scores[userId]?.points || 0;
       await ctx.reply(`Your current score is ${score} points.`, {
         message_thread_id: THREAD_ID
       });
       console.log('/checkscore command processed successfully');
-    } else if (command === 'clearleaderboard') {
+    } else if (commandText === 'clearleaderboard') {
       if (ctx.from.username !== ADMIN_USERNAME) {
         console.log(`Ignoring /clearleaderboard: User ${ctx.from.username} is not admin`);
         return;
       }
       scores = {};
+      await saveScores(); // Save empty scores to file
       await ctx.reply('Leaderboard cleared!', {
         message_thread_id: THREAD_ID
       });
       console.log('/clearleaderboard command processed successfully');
-    } else if (command === 'testquestion') {
+    } else if (commandText === 'testquestion') {
       if (ctx.from.username !== ADMIN_USERNAME) {
         console.log(`Ignoring /testquestion: User ${ctx.from.username} is not admin`);
         return;
       }
-      console.log('Posting test question');
-      await postQuestion({
-        question: 'Test question? A) A B) B C) C D) D',
-        answer: 'C',
-        time: 'now'
-      });
+      let questionToPost;
+      if (args.length > 0 && !isNaN(args[0])) {
+        const index = parseInt(args[0]) - 1;
+        if (index >= 0 && index < questions.length) {
+          questionToPost = questions[index];
+        } else {
+          await ctx.reply(`Invalid question index. Please use a number between 1 and ${questions.length}.`, {
+            message_thread_id: THREAD_ID
+          });
+          return;
+        }
+      } else {
+        questionToPost = {
+          question: 'Test question? A) A B) B C) C D) D',
+          answer: 'C',
+          time: 'now'
+        };
+      }
+      console.log(`Posting test question: ${questionToPost.question}`);
+      await postQuestion(questionToPost);
       console.log('/testquestion command processed successfully');
     } else {
-      console.log(`Unknown command: ${command}`);
+      console.log(`Unknown command: ${commandText}`);
     }
   } catch (error) {
-    console.error(`Error in command ${command}:`, error);
+    console.error(`Error in command ${commandText}:`, error);
   }
 });
 
@@ -278,10 +352,15 @@ cron.schedule('0 7,19 * * 6', async () => {
       parse_mode: 'Markdown',
       message_thread_id: THREAD_ID
     });
+    // Pin the message
+    await bot.telegram.pinChatMessage(GROUP_ID, sentMessage.message_id, {
+      disable_notification: true
+    });
+    console.log('Weekly leaderboard posted and pinned successfully');
+    // Unpin after 24 hours
     setTimeout(() => {
-      bot.telegram.deleteMessage(GROUP_ID, sentMessage.message_id).catch(console.error);
-    }, 2 * 60 * 1000); // Delete after 2 minutes
-    console.log('Weekly leaderboard posted successfully');
+      bot.telegram.unpinChatMessage(GROUP_ID, sentMessage.message_id).catch(console.error);
+    }, 24 * 60 * 60 * 1000); // Unpin after 24 hours
   } catch (error) {
     console.error('Error posting weekly leaderboard:', error);
   }
@@ -295,6 +374,7 @@ async function startBot() {
   }
   isPolling = true;
   console.log('Starting bot...');
+  await loadScores(); // Load scores before scheduling
   await scheduleQuestions();
   try {
     await bot.launch({ dropPendingUpdates: true });
