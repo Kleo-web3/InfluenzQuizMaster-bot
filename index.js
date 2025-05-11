@@ -14,6 +14,7 @@ let scores = {}; // Store scores in memory
 let questions = [];
 let currentQuestion = null;
 let firstAttempts = new Map(); // Tracks first attempt per user per question
+let firstCorrectUser = null; // Tracks first user to answer correctly
 let isPolling = false; // Prevent multiple polling instances
 
 // Load questions from file
@@ -76,6 +77,7 @@ async function postQuestion(question) {
     });
     currentQuestion = question;
     firstAttempts.clear(); // Reset first attempts for new question
+    firstCorrectUser = null; // Reset first correct user
     console.log('Question posted successfully');
   } catch (error) {
     console.error('Error posting question:', error);
@@ -127,7 +129,7 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
   const username = ctx.from.username || ctx.from.first_name;
   const answer = ctx.message.text.trim().toUpperCase();
 
-  // Check if user has already submitted a first attempt
+  // Check if user has already submitted an attempt
   const attemptKey = `${userId}:${currentQuestion.question}`;
   if (firstAttempts.has(attemptKey)) {
     console.log(`User ${username} already attempted: ${attemptKey}`);
@@ -138,19 +140,27 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
   firstAttempts.set(attemptKey, answer);
   console.log(`Recorded first attempt: ${username} -> ${answer}`);
 
-  // Initialize user score
-  if (!scores[userId]) {
-    scores[userId] = { username, points: 0 };
-  }
-
   // Check answer
   try {
     if (answer === currentQuestion.answer) {
-      scores[userId].points += 1;
-      await ctx.reply(`Correct, ${username}! You've earned 1 point.`, {
-        message_thread_id: THREAD_ID
-      });
-      console.log(`Correct answer by ${username}, Points: ${scores[userId].points}`);
+      if (firstCorrectUser === null) {
+        // First correct answer
+        firstCorrectUser = userId;
+        if (!scores[userId]) {
+          scores[userId] = { username, points: 0 };
+        }
+        scores[userId].points += 1;
+        await ctx.reply(`Correct, ${username}! You're the first to answer correctly and earned 1 point!`, {
+          message_thread_id: THREAD_ID
+        });
+        console.log(`First correct answer by ${username}, Points: ${scores[userId].points}`);
+      } else {
+        // Correct but not first
+        await ctx.reply(`Correct, ${username}, but someone else was first. Try to be quicker next time!`, {
+          message_thread_id: THREAD_ID
+        });
+        console.log(`Correct answer by ${username}, but not first (first was user ${firstCorrectUser})`);
+      }
     } else {
       await ctx.reply(`Sorry, ${username}, that's incorrect. Try the next one!`, {
         message_thread_id: THREAD_ID
@@ -188,7 +198,7 @@ bot.on('message', async (ctx) => {
         'Welcome to the Influenz Quiz Bot!\n' +
         '- Questions are posted in the Discussion/Q and Zone topic.\n' +
         '- Reply with A, B, C, or D to answer.\n' +
-        '- Only your first answer per question counts.\n' +
+        '- Only the first correct answer earns a point.\n' +
         '- Commands:\n' +
         '  /leaderboard - View top 5 scores\n' +
         '  /checkscore - Check your score\n' +
