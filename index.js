@@ -7,7 +7,7 @@ const express = require('express');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const GROUP_ID = process.env.GROUP_ID || '-1002288817447';
 const THREAD_ID = '3'; // Discussion/Q and Zone topic
-const ADMIN_USERNAME = '@kryptwriter';
+const ADMIN_ID = '5147724876'; // Your Telegram ID
 const QUESTIONS_FILE = path.join(__dirname, 'questions.json');
 const SCORES_FILE = path.join(__dirname, 'scores.json');
 
@@ -290,8 +290,8 @@ bot.on('message', async (ctx) => {
       });
       console.log('/checkscore command processed successfully');
     } else if (commandText === 'clearleaderboard') {
-      if (ctx.from.username !== ADMIN_USERNAME) {
-        console.log(`Ignoring /clearleaderboard: User ${ctx.from.username} is not admin`);
+      if (String(ctx.from.id) !== ADMIN_ID) {
+        console.log(`Ignoring /clearleaderboard: User ID ${ctx.from.id} is not admin`);
         return;
       }
       scores = {};
@@ -301,8 +301,8 @@ bot.on('message', async (ctx) => {
       });
       console.log('/clearleaderboard command processed successfully');
     } else if (commandText === 'testquestion') {
-      if (ctx.from.username !== ADMIN_USERNAME) {
-        console.log(`Ignoring /testquestion: User ${ctx.from.username} is not admin`);
+      if (String(ctx.from.id) !== ADMIN_ID) {
+        console.log(`Ignoring /testquestion: User ID ${ctx.from.id} is not admin`);
         return;
       }
       let questionToPost;
