@@ -18,6 +18,7 @@ let firstAttempts = new Map(); // Tracks first attempt per user per question
 let firstCorrectUser = null; // Tracks first user to answer correctly
 let isPolling = false; // Prevent multiple polling instances
 let questionTimeout = null; // Tracks question timeout
+let scheduledTasks = []; // Store scheduled cron tasks to prevent duplicates
 
 // Load questions from file
 async function loadQuestions() {
@@ -31,7 +32,7 @@ async function loadQuestions() {
     }
     const data = await fs.readFile(QUESTIONS_FILE, 'utf8');
     questions = JSON.parse(data);
-    console.log(`Loaded ${questions.length} questions:`, JSON.stringify(questions, null, 2));
+    console.log(`Loaded ${questions.length} questions`);
   } catch (error) {
     console.error('Error loading questions:', error);
     questions = [];
@@ -99,22 +100,22 @@ function getCurrentDayTime() {
   return { day, time };
 }
 
-// Post announcement 30 minutes before question
-async function postAnnouncement(question) {
-  console.log(`Posting announcement for question at ${question.time} UTC`);
+// Post announcement 30 minutes before session
+async function postAnnouncement(sessionTime, sessionName) {
+  console.log(`Posting announcement for ${sessionName} session at ${sessionTime} UTC`);
   try {
-    await bot.telegram.sendMessage(GROUP_ID, `Quiz question coming up in 30 minutes at ${question.time} UTC! Get ready!`, {
+    await bot.telegram.sendMessage(GROUP_ID, `Quiz session (${sessionName}) with 6 questions starts in 30 minutes at ${sessionTime} UTC! Get ready!`, {
       message_thread_id: THREAD_ID
     });
-    console.log('Announcement posted successfully');
+    console.log(`Announcement for ${sessionName} session posted successfully`);
   } catch (error) {
-    console.error('Error posting announcement:', error);
+    console.error(`Error posting announcement for ${sessionName} session:`, error);
   }
 }
 
 // Post question and set current question
 async function postQuestion(question) {
-  console.log(`Posting question at ${question.time} UTC: ${question.question}`);
+  console.log(`Posting question: ${question.question}`);
   try {
     await bot.telegram.sendMessage(GROUP_ID, formatQuestion(question), {
       message_thread_id: THREAD_ID
@@ -141,28 +142,73 @@ async function postQuestion(question) {
   }
 }
 
-// Schedule questions
+// Schedule questions for a session (6 questions in 30 minutes)
+function scheduleSessionQuestions(sessionName, startHour, startMinute, day) {
+  // Announcement 30 minutes before session
+  let announceMinute = startMinute - 30;
+  let announceHour = startHour;
+  if (announceMinute < 0) {
+    announceMinute += 60;
+    announceHour -= 1;
+    if (announceHour < 0) announceHour += 24;
+  }
+  const announceCron = `${announceMinute} ${announceHour} * * ${day}`;
+  const sessionTime = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+  console.log(`Scheduling announcement for ${sessionName} session: ${announceCron}`);
+
+  // Schedule announcement
+  const announceTask = cron.schedule(announceCron, () => postAnnouncement(sessionTime, sessionName), { timezone: 'UTC' });
+  scheduledTasks.push(announceTask);
+
+  // Schedule 6 questions at 5-minute intervals
+  let questionIndex = Math.floor(Math.random() * (questions.length - 6)); // Random starting index for variety
+  for (let i = 0; i < 6; i++) {
+    const questionMinute = startMinute + i * 5;
+    let questionHour = startHour;
+    if (questionMinute >= 60) {
+      questionHour += Math.floor(questionMinute / 60);
+      questionMinute = questionMinute % 60;
+    }
+    const questionCron = `${questionMinute} ${questionHour} * * ${day}`;
+    console.log(`Scheduling question ${i + 1} for ${sessionName} session: ${questionCron}`);
+    const questionTask = cron.schedule(questionCron, () => {
+      if (questions[questionIndex]) {
+        postQuestion(questions[questionIndex]);
+        questionIndex = (questionIndex + 1) % questions.length; // Move to next question, loop if needed
+      } else {
+        console.error(`No question available at index ${questionIndex}`);
+      }
+    }, { timezone: 'UTC' });
+    scheduledTasks.push(questionTask);
+  }
+}
+
+// Schedule all sessions
 async function scheduleQuestions() {
   await loadQuestions();
   console.log('Scheduling questions...');
-  if (questions.length === 0) {
-    console.error('No questions to schedule');
+  if (questions.length < 6) {
+    console.error('Not enough questions to schedule (need at least 6)');
     return;
   }
-  questions.forEach((q) => {
-    const [hour, minute] = q.time.split(':').map(Number);
-    let announceMinute = minute - 30;
-    let announceHour = hour;
-    if (announceMinute < 0) {
-      announceMinute += 60;
-      announceHour -= 1;
-      if (announceHour < 0) announceHour += 24;
-    }
-    const cronTime = `${announceMinute} ${announceHour} * * ${q.day}`;
-    const questionCronTime = `${minute} ${hour} * * ${q.day}`;
-    console.log(`Scheduled announcement: ${cronTime}, Question: ${questionCronTime}`);
-    cron.schedule(cronTime, () => postAnnouncement(q), { timezone: 'UTC' });
-    cron.schedule(questionCronTime, () => postQuestion(q), { timezone: 'UTC' });
+
+  // Clear any existing scheduled tasks to prevent duplicates
+  scheduledTasks.forEach(task => task.destroy());
+  scheduledTasks = [];
+
+  // Define session times (in UTC): Morning (10:00), Noon (14:00), Evening (19:30)
+  const sessions = [
+    { name: 'Morning', hour: 10, minute: 0 },
+    { name: 'Noon', hour: 14, minute: 0 },
+    { name: 'Evening', hour: 19, minute: 30 }
+  ];
+
+  // Schedule sessions for each weekday (Monday to Friday)
+  const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  weekdays.forEach(day => {
+    sessions.forEach(session => {
+      scheduleSessionQuestions(session.name, session.hour, session.minute, day);
+    });
   });
 }
 
@@ -255,7 +301,7 @@ bot.on('message', async (ctx) => {
     } else if (commandText === 'help') {
       await ctx.reply(
         'Welcome to the Influenz Quiz Bot!\n' +
-        '- Questions are posted in the Discussion/Q and Zone topic.\n' +
+        '- Questions are posted in the Discussion/Q and Zone topic (6 questions every morning, noon, and evening, Monday to Friday).\n' +
         '- Reply with A, B, C, or D to answer (5-minute time limit).\n' +
         '- Only the first correct answer earns a point.\n' +
         '- Commands:\n' +
@@ -395,6 +441,7 @@ process.on('SIGINT', async () => {
     isPolling = false;
     console.log('Bot stopped');
   }
+  scheduledTasks.forEach(task => task.destroy());
   process.exit(0);
 });
 
@@ -405,6 +452,7 @@ process.on('SIGTERM', async () => {
     isPolling = false;
     console.log('Bot stopped');
   }
+  scheduledTasks.forEach(task => task.destroy());
   process.exit(0);
 });
 
