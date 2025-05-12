@@ -19,8 +19,9 @@ let firstCorrectUser = null; // Tracks first user to answer correctly
 let isPolling = false; // Prevent multiple polling instances
 let questionTimeout = null; // Tracks question timeout
 let scheduledTasks = []; // Store scheduled cron tasks to prevent duplicates
+let questionIndex = 0; // Tracks current question for sequential selection
 
-// Load questions from file
+// Load questions from file and shuffle once
 async function loadQuestions() {
   try {
     const fs = require('fs').promises;
@@ -32,11 +33,21 @@ async function loadQuestions() {
     }
     const data = await fs.readFile(QUESTIONS_FILE, 'utf8');
     questions = JSON.parse(data);
-    console.log(`Loaded ${questions.length} questions`);
+    questions = shuffleQuestions(questions); // Shuffle once at startup
+    console.log(`Loaded and shuffled ${questions.length} questions`);
   } catch (error) {
     console.error('Error loading questions:', error);
     questions = [];
   }
+}
+
+// Shuffle questions array (Fisher-Yates)
+function shuffleQuestions(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
 }
 
 // Load scores from file
@@ -68,6 +79,37 @@ async function saveScores() {
   } catch (error) {
     console.error('Error saving scores:', error);
   }
+}
+
+// Format time as HH:MM UTC
+function formatTime(hour, minute) {
+  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} UTC`;
+}
+
+// Get next session details
+function getNextSessionDetails(currentSessionName) {
+  const sessions = [
+    { name: 'Morning', hour: 10, minute: 0 },
+    { name: 'Noon', hour: 14, minute: 0 },
+    { name: 'Evening', hour: 19, minute: 30 }
+  ];
+  const currentIndex = sessions.findIndex(s => s.name === currentSessionName);
+  const nextIndex = (currentIndex + 1) % sessions.length;
+  const nextSession = sessions[nextIndex];
+  const isNextDay = nextIndex === 0;
+
+  // Get next day's name for Evening
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const today = new Date();
+  const nextDayIndex = (today.getDay() + 1) % 7;
+  const nextDayName = isNextDay ? days[nextDayIndex] : '';
+
+  return {
+    name: nextSession.name,
+    time: formatTime(nextSession.hour, nextSession.minute),
+    isNextDay,
+    nextDayName
+  };
 }
 
 // Format question for Telegram
@@ -153,7 +195,7 @@ function scheduleSessionQuestions(sessionName, startHour, startMinute, day) {
     if (announceHour < 0) announceHour += 24;
   }
   const announceCron = `${announceMinute} ${announceHour} * * ${day}`;
-  const sessionTime = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+  const sessionTime = formatTime(startHour, startMinute);
   console.log(`Scheduling announcement for ${sessionName} session: ${announceCron}`);
 
   // Schedule announcement
@@ -161,23 +203,23 @@ function scheduleSessionQuestions(sessionName, startHour, startMinute, day) {
   scheduledTasks.push(announceTask);
 
   // Schedule 6 questions at 5-minute intervals
-  let questionIndex = Math.floor(Math.random() * (questions.length - 6)); // Random starting index for variety
   for (let i = 0; i < 6; i++) {
     const questionMinute = startMinute + i * 5;
-    let questionHour = startHour;
-    if (questionMinute >= 60) {
-      questionHour += Math.floor(questionMinute / 60);
-      questionMinute = questionMinute % 60;
-    }
-    const questionCron = `${questionMinute} ${questionHour} * * ${day}`;
+    let questionHour = startHour + Math.floor(questionMinute / 60);
+    const adjustedMinute = questionMinute % 60;
+    const questionCron = `${adjustedMinute} ${questionHour} * * ${day}`;
     console.log(`Scheduling question ${i + 1} for ${sessionName} session: ${questionCron}`);
     const questionTask = cron.schedule(questionCron, () => {
-      if (questions[questionIndex]) {
-        postQuestion(questions[questionIndex]);
-        questionIndex = (questionIndex + 1) % questions.length; // Move to next question, loop if needed
+      const qIndex = questionIndex + i; // Use sequential questions
+      if (questions[qIndex]) {
+        questions[qIndex].sessionName = sessionName; // Add sessionName for announcements
+        questions[qIndex].questionNumber = i + 1; // Add questionNumber
+        postQuestion(questions[qIndex]);
       } else {
-        console.error(`No question available at index ${questionIndex}`);
+        console.error(`No question available at index ${qIndex}`);
       }
+      // Increment questionIndex after the last question in the session
+      if (i === 5) questionIndex += 6;
     }, { timezone: 'UTC' });
     scheduledTasks.push(questionTask);
   }
@@ -229,7 +271,7 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
   }
 
   const userId = ctx.from.id;
-  const username = ctx.from.username || ctx.from.first_name;
+  const username = ctx.from.username || ctx.from.first_name || 'A user';
   const answer = ctx.message.text.trim().toUpperCase();
 
   // Check if user has already submitted an attempt
@@ -246,6 +288,7 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
   // Check answer
   try {
     if (answer === currentQuestion.answer) {
+      let reply = '';
       if (firstCorrectUser === null) {
         // First correct answer
         firstCorrectUser = userId;
@@ -254,17 +297,32 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
         }
         scores[userId].points += 1;
         await saveScores(); // Save scores to file
-        await ctx.reply(`Correct, ${username}! You're the first to answer correctly and earned 1 point!`, {
-          message_thread_id: THREAD_ID
-        });
-        console.log(`First correct answer by ${username}, Points: ${scores[userId].points}`);
+        reply = `Correct, ${username}! You're the first to answer correctly and earned 1 point!`;
+        clearTimeout(questionTimeout); // Prevent time's up overlap
       } else {
         // Correct but not first
-        await ctx.reply(`Correct, ${username}, but someone else was first. Try to be quicker next time!`, {
-          message_thread_id: THREAD_ID
-        });
-        console.log(`Correct answer by ${username}, but not first (first was user ${firstCorrectUser})`);
+        reply = `Correct, ${username}, but someone else was first. Try to be quicker next time!`;
       }
+
+      // Add post-answer announcement
+      if (currentQuestion.questionNumber < 6) {
+        const session = [
+          { name: 'Morning', hour: 10, minute: 0 },
+          { name: 'Noon', hour: 14, minute: 0 },
+          { name: 'Evening', hour: 19, minute: 30 }
+        ].find(s => s.name === currentQuestion.sessionName);
+        const currentQuestionTime = currentQuestion.questionNumber * 5;
+        const nextQuestionMinute = session.minute + currentQuestionTime + 5;
+        const nextQuestionHour = session.hour + Math.floor(nextQuestionMinute / 60);
+        const adjustedMinute = nextQuestionMinute % 60;
+        const nextTime = formatTime(nextQuestionHour, adjustedMinute);
+        reply += `\nThe next question will be posted at ${nextTime}.`;
+      } else {
+        const { name: nextSessionName, time: nextSessionTime, isNextDay, nextDayName } = getNextSessionDetails(currentQuestion.sessionName);
+        reply += `\nThis concludes the ${currentQuestion.sessionName} session! The next session (${nextSessionName}) starts at ${nextSessionTime}${isNextDay ? ` tomorrow, ${nextDayName}` : ''}.`;
+      }
+
+      await ctx.reply(reply, { message_thread_id: THREAD_ID });
     } else {
       await ctx.reply(`Sorry, ${username}, that's incorrect. Try the next one!`, {
         message_thread_id: THREAD_ID
@@ -308,7 +366,7 @@ bot.on('message', async (ctx) => {
         '  /leaderboard - View top 5 scores\n' +
         '  /checkscore - Check your score\n' +
         '  /help - Show this message\n' +
-        '  /testquestion [number] - Admin tests a question (optional number 1-45)',
+        '  /testquestion [number] - Admin tests a question (optional number 1-258)',
         { message_thread_id: THREAD_ID }
       );
       console.log('/help command processed successfully');
