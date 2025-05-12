@@ -1,193 +1,13 @@
 [
   {
     "day": "Monday",
-    "time": "07:30",
+    "time": "10:00",
     "question": "What is risk management in trading? A) Maximizing profits B) Minimizing losses C) Predicting market movements D) Following market trends",
     "answer": "B"
   },
   {
     "day": "Monday",
-    "time": "13:30",
-    "question": "What is a stop-loss order? A) An order to buy a security B) An order to sell a security at a specified price C) An order to limit losses D) An order to take profits",
-    "answer": "C"
-  },
-  {
-    "day": "Monday",
-    "time": "19:30",
-    "question": "What is leverage in trading? A) Using borrowed money to increase potential gains B) Reducing risk by diversifying investments C) Predicting market movements D) Following market trends",
-    "answer": "A"
-  },
-  {
-    "day": "Tuesday",
-    "time": "07:30",
-    "question": "What is a bull market? A) A market with declining prices B) A market with stable prices C) A market with rising prices D) A market with high volatility",
-    "answer": "C"
-  },
-  {
-    "day": "Tuesday",
-    "time": "13:30",
-    "question": "What is a bear market? A) A market with rising prices B) A market with stable prices C) A market with declining prices D) A market with low volatility",
-    "answer": "C"
-  },
-  {
-    "day": "Tuesday",
-    "time": "19:30",
-    "question": "What is diversification in trading? A) Investing in a single asset B) Investing in multiple assets to reduce risk C) Predicting market movements D) Following market trends",
-    "answer": "B"
-  },
-  {
-    "day": "Wednesday",
-    "time": "07:30",
-    "question": "What is a trading plan? A) A set of rules for entering trades B) A set of rules for exiting trades C) A comprehensive strategy for trading D) A prediction of market movements",
-    "answer": "C"
-  },
-  {
-    "day": "Wednesday",
-    "time": "13:30",
-    "question": "What is position sizing? A) Determining the amount of capital to allocate to a trade B) Predicting market movements C) Following market trends D) Maximizing profits",
-    "answer": "A"
-  },
-  {
-    "day": "Wednesday",
-    "time": "19:30",
-    "question": "What is a trading journal? A) A record of trades B) A prediction of market movements C) A trading plan D) A risk management strategy",
-    "answer": "A"
-  },
-  {
-    "day": "Thursday",
-    "time": "07:30",
-    "question": "What is technical analysis? A) Analyzing financial statements B) Analyzing market trends and charts C) Predicting market movements D) Following market news",
-    "answer": "B"
-  },
-  {
-    "day": "Thursday",
-    "time": "13:30",
-    "question": "What is fundamental analysis? A) Analyzing market trends and charts B) Analyzing financial statements and economic data C) Predicting market movements D) Following market news",
-    "answer": "B"
-  },
-  {
-    "day": "Thursday",
-    "time": "19:30",
-    "question": "What is a breakout in trading? A) When a security's price moves below support B) When a security's price moves above resistance C) When a security's price remains stable D) When a security's price is volatile",
-    "answer": "B"
-  },
-  {
-    "day": "Friday",
-    "time": "07:30",
-    "question": "What is a trend line? A) A line connecting support levels B) A line connecting resistance levels C) A line showing the direction of market trends D) A line predicting market movements",
-    "answer": "C"
-  },
-  {
-    "day": "Friday",
-    "time": "13:30",
-    "question": "What is support in trading? A) A price level where a security tends to rise B) A price level where a security tends to fall C) A price level where a security remains stable D) A price level where a security is volatile",
-    "answer": "A"
-  },
-  {
-    "day": "Friday",
-    "time": "19:30",
-    "question": "What is resistance in trading? A) A price level where a security tends to rise B) A price level where a security tends to fall C) A price level where a security remains stable D) A price level where a security is volatile",
-    "answer": "B"
-  },
-  {
-    "day": "Monday",
-    "time": "07:30",
-    "question": "What is a candlestick chart? A) A chart showing security prices over time B) A chart showing market trends C) A chart showing trading volume D) A chart showing economic data",
-    "answer": "A"
-  },
-  {
-    "day": "Monday",
-    "time": "13:30",
-    "question": "What is a moving average? A) A calculation of a security's average price over time B) A prediction of market movements C) A trading strategy D) A risk management technique",
-    "answer": "A"
-  },
-  {
-    "day": "Monday",
-    "time": "19:30",
-    "question": "What is overtrading? A) Trading excessively, leading to increased risk B) Trading infrequently, leading to missed opportunities C) Trading with a solid strategy D) Trading without emotions",
-    "answer": "A"
-  },
-  {
-    "day": "Tuesday",
-    "time": "07:30",
-    "question": "What is emotional trading? A) Making trading decisions based on logic B) Making trading decisions based on emotions C) Following market trends D) Predicting market movements",
-    "answer": "B"
-  },
-  {
-    "day": "Tuesday",
-    "time": "13:30",
-    "question": "What is a trading edge? A) A strategy that guarantees profits B) A strategy that minimizes losses C) A strategy that provides a statistical advantage D) A strategy that follows market trends",
-    "answer": "C"
-  },
-  {
-    "day": "Tuesday",
-    "time": "19:30",
-    "question": "What is backtesting? A) Testing a trading strategy on historical data B) Testing a trading strategy on live data C) Predicting market movements D) Following market trends",
-    "answer": "A"
-  },
-  {
-    "day": "Wednesday",
-    "time": "07:30",
-    "question": "What is a scalp trade? A) A trade held for a short period, aiming to capture small profits B) A trade held for a long period, aiming to capture large profits C) A trade that follows market trends D) A trade that predicts market movements",
-    "answer": "A"
-  },
-  {
-    "day": "Wednesday",
-    "time": "13:30",
-    "question": "What is a swing trade? A) A trade held for a short period, aiming to capture small profits B) A trade held for a few days or weeks, aiming to capture market movements C) A trade that follows market trends D) A trade that predicts market movements",
-    "answer": "B"
-  },
-  {
-    "day": "Wednesday",
-    "time": "19:30",
-    "question": "What is position trading? A) Holding trades for a short period B) Holding trades for a long period, aiming to capture large market movements C) Following market trends D) Predicting market movements",
-    "answer": "B"
-  },
-  {
-    "day": "Thursday",
-    "time": "07:30",
-    "question": "What is market volatility? A) The rate of change in market prices B) The stability of market prices C) The predictability of market movements D) The liquidity of market assets",
-    "answer": "A"
-  },
-  {
-    "day": "Thursday",
-    "time": "13:30",
-    "question": "What is liquidity in trading? A) The ability to buy or sell assets quickly and at a fair price B) The ability to predict market movements C) The ability to follow market trends D) The ability to minimize losses",
-    "answer": "A"
-  },
-  {
-    "day": "Thursday",
-    "time": "19:30",
-    "question": "What is slippage in trading? A) The difference between expected and actual trade prices B) The difference between market trends and predictions C) The difference between risk and reward D) The difference between trading strategies",
-    "answer": "A"
-  },
-  {
-    "day": "Friday",
-    "time": "07:30",
-    "question": "What is a trading mentor? A) An experienced trader who provides guidance and support B) A trading platform that offers automated strategies C) A market analyst who predicts market movements D) A trading book that provides strategies",
-    "answer": "A"
-  },
-  {
-    "day": "Friday",
-    "time": "13:30",
-    "question": "What is continuous learning in trading? A) Learning from trading experiences and improving strategies B) Following market trends and predictions C) Sticking to a single trading strategy D) Ignoring market analysis and news",
-    "answer": "A"
-  },
-  {
-    "day": "Friday",
-    "time": "19:30",
-    "question": "What is key to staying profitable in trading? A) Predicting market movements B) Following market trends C) Risk management and discipline D) Maximizing profits",
-    "answer": "C"
-  },
-  {
-    "day": "Monday",
-    "time": "07:30",
-    "question": "How can traders minimize losses? A) By increasing position sizes B) By setting stop-loss orders C) By following market trends D) By predicting market movements",
-    "answer": "B"
-  },
-  {
-    "day": "Monday",
-    "time": "13:30",
+    "time": "14:00",
     "question": "How can traders stay disciplined? A) By setting clear trading goals and rules B) By following market trends C) By predicting market movements D) By increasing position sizes",
     "answer": "A"
   },
@@ -199,13 +19,13 @@
   },
   {
     "day": "Tuesday",
-    "time": "07:30",
+    "time": "10:00",
     "question": "How can traders manage emotions? A) By taking breaks and staying calm B) By increasing position sizes C) By following market trends D) By predicting market movements",
     "answer": "A"
   },
   {
     "day": "Tuesday",
-    "time": "13:30",
+    "time": "14:00",
     "question": "How can traders stay adaptable? A) By sticking to a single trading strategy B) By adjusting strategies according to market conditions C) By predicting market movements D) By following market trends",
     "answer": "B"
   },
@@ -217,13 +37,13 @@
   },
   {
     "day": "Wednesday",
-    "time": "07:30",
+    "time": "10:00",
     "question": "How can traders stay focused? A) By setting clear trading goals and priorities B) By following market trends C) By predicting market movements D) By increasing position sizes",
     "answer": "A"
   },
   {
     "day": "Wednesday",
-    "time": "13:30",
+    "time": "14:00",
     "question": "What is the importance of trading psychology? A) To predict market movements B) To follow market trends C) To manage emotions and stay disciplined D) To maximize profits",
     "answer": "C"
   },
@@ -235,13 +55,13 @@
   },
   {
     "day": "Thursday",
-    "time": "07:30",
+    "time": "10:00",
     "question": "What is the importance of self-reflection in trading? A) To predict market movements B) To follow market trends C) To identify areas for improvement D) To maximize profits",
     "answer": "C"
   },
   {
     "day": "Thursday",
-    "time": "13:30",
+    "time": "14:00",
     "question": "How can traders stay motivated? A) By setting clear trading goals and tracking progress B) By following market trends C) By predicting market movements D) By increasing position sizes",
     "answer": "A"
   },
@@ -253,13 +73,13 @@
   },
   {
     "day": "Friday",
-    "time": "07:30",
+    "time": "10:00",
     "question": "What is a common mistake made by new traders? A) Over-diversification B) Insufficient risk management C) Over-reliance on technical analysis D) Lack of patience",
     "answer": "B"
   },
   {
     "day": "Friday",
-    "time": "13:30",
+    "time": "14:00",
     "question": "What is a market order? A) An order to buy or sell at the best available price B) An order to buy or sell at a specific price C) An order to limit losses D) An order to take profits",
     "answer": "A"
   },
@@ -267,6 +87,186 @@
     "day": "Friday",
     "time": "19:30",
     "question": "What is a limit order? A) An order to buy or sell at the best available price B) An order to buy or sell at a specific price or better C) An order to limit losses D) An order to take profits",
+    "answer": "B"
+  },
+  {
+    "day": "Monday",
+    "time": "10:00",
+    "question": "What is the purpose of a trading journal? A) To predict market trends B) To track and analyze trading performance C) To follow market news D) To increase trade sizes",
+    "answer": "B"
+  },
+  {
+    "day": "Monday",
+    "time": "14:00",
+    "question": "Why is liquidity important in trading? A) It ensures high profits B) It allows easy entry and exit from trades C) It predicts market movements D) It reduces trading fees",
+    "answer": "B"
+  },
+  {
+    "day": "Monday",
+    "time": "19:30",
+    "question": "What is technical analysis? A) Predicting market trends B) Analyzing historical price data C) Following market news D) Managing emotions",
+    "answer": "B"
+  },
+  {
+    "day": "Tuesday",
+    "time": "10:00",
+    "question": "What is fundamental analysis? A) Analyzing price charts B) Evaluating a company's financial health C) Following market trends D) Predicting market movements",
+    "answer": "B"
+  },
+  {
+    "day": "Tuesday",
+    "time": "14:00",
+    "question": "What is a stop-loss order? A) An order to buy at a specific price B) An order to sell at a specific price to limit losses C) An order to take profits D) An order to follow trends",
+    "answer": "B"
+  },
+  {
+    "day": "Tuesday",
+    "time": "19:30",
+    "question": "What is leverage in trading? A) Borrowing funds to increase trade size B) Reducing risk C) Following market trends D) Analyzing charts",
+    "answer": "A"
+  },
+  {
+    "day": "Wednesday",
+    "time": "10:00",
+    "question": "What is a trading plan? A) A set of rules for trading decisions B) A prediction of market trends C) A way to follow news D) A method to increase profits",
+    "answer": "A"
+  },
+  {
+    "day": "Wednesday",
+    "time": "14:00",
+    "question": "Why is diversification important? A) To increase profits B) To reduce risk C) To predict markets D) To follow trends",
+    "answer": "B"
+  },
+  {
+    "day": "Wednesday",
+    "time": "19:30",
+    "question": "What is a candlestick chart? A) A chart showing market trends B) A chart showing price movements over time C) A chart for predictions D) A chart for news",
+    "answer": "B"
+  },
+  {
+    "day": "Thursday",
+    "time": "10:00",
+    "question": "What is a bull market? A) A market with rising prices B) A market with falling prices C) A stable market D) A volatile market",
+    "answer": "A"
+  },
+  {
+    "day": "Thursday",
+    "time": "14:00",
+    "question": "What is a bear market? A) A market with rising prices B) A market with falling prices C) A stable market D) A volatile market",
+    "answer": "B"
+  },
+  {
+    "day": "Thursday",
+    "time": "19:30",
+    "question": "What is volatility in trading? A) Stability in prices B) Rapid price changes C) Predictable trends D) Low liquidity",
+    "answer": "B"
+  },
+  {
+    "day": "Friday",
+    "time": "10:00",
+    "question": "What is a breakout in trading? A) A price movement beyond a key level B) A stable price C) A market crash D) A trend reversal",
+    "answer": "A"
+  },
+  {
+    "day": "Friday",
+    "time": "14:00",
+    "question": "What is a trend in trading? A) A random price movement B) A consistent price direction C) A stable price D) A market crash",
+    "answer": "B"
+  },
+  {
+    "day": "Friday",
+    "time": "19:30",
+    "question": "What is a moving average? A) A tool to predict prices B) A tool to smooth price data C) A tool for news D) A tool for profits",
+    "answer": "B"
+  },
+  {
+    "day": "Monday",
+    "time": "10:00",
+    "question": "What is a margin call? A) A request for more funds to cover losses B) A profit-taking order C) A market trend D) A stable price",
+    "answer": "A"
+  },
+  {
+    "day": "Monday",
+    "time": "14:00",
+    "question": "What is a pip in forex trading? A) A unit of price movement B) A type of order C) A market trend D) A profit measure",
+    "answer": "A"
+  },
+  {
+    "day": "Monday",
+    "time": "19:30",
+    "question": "What is a lot in trading? A) A unit of trade size B) A type of chart C) A market trend D) A profit measure",
+    "answer": "A"
+  },
+  {
+    "day": "Tuesday",
+    "time": "10:00",
+    "question": "What is a demo account? A) A real trading account B) A practice trading account C) A market analysis tool D) A profit tracker",
+    "answer": "B"
+  },
+  {
+    "day": "Tuesday",
+    "time": "14:00",
+    "question": "What is a spread in trading? A) The difference between bid and ask prices B) A type of order C) A market trend D) A profit measure",
+    "answer": "A"
+  },
+  {
+    "day": "Tuesday",
+    "time": "19:30",
+    "question": "What is a take-profit order? A) An order to limit losses B) An order to lock in profits C) An order to follow trends D) An order to predict prices",
+    "answer": "B"
+  },
+  {
+    "day": "Wednesday",
+    "time": "10:00",
+    "question": "What is a trading strategy? A) A random trade decision B) A set of rules for trading C) A market prediction D) A profit guarantee",
+    "answer": "B"
+  },
+  {
+    "day": "Wednesday",
+    "time": "14:00",
+    "question": "What is a support level? A) A price where buying is strong B) A price where selling is strong C) A market trend D) A profit level",
+    "answer": "A"
+  },
+  {
+    "day": "Wednesday",
+    "time": "19:30",
+    "question": "What is a resistance level? A) A price where buying is strong B) A price where selling is strong C) A market trend D) A profit level",
+    "answer": "B"
+  },
+  {
+    "day": "Thursday",
+    "time": "10:00",
+    "question": "What is a trading platform? A) A tool for market news B) A software for executing trades C) A market trend D) A profit tracker",
+    "answer": "B"
+  },
+  {
+    "day": "Thursday",
+    "time": "14:00",
+    "question": "What is a drawdown? A) A profit increase B) A reduction in account balance C) A market trend D) A type of order",
+    "answer": "B"
+  },
+  {
+    "day": "Thursday",
+    "time": "19:30",
+    "question": "What is a trading session? A) A period of market activity B) A type of order C) A market trend D) A profit measure",
+    "answer": "A"
+  },
+  {
+    "day": "Friday",
+    "time": "10:00",
+    "question": "What is continuous learning in trading? A) Learning from trading experiences and improving strategies B) Following market trends and predictions C) Sticking to a single trading strategy D) Ignoring market analysis and news",
+    "answer": "A"
+  },
+  {
+    "day": "Friday",
+    "time": "14:00",
+    "question": "What is key to staying profitable in trading? A) Predicting market movements B) Following market trends C) Risk management and discipline D) Maximizing profits",
+    "answer": "C"
+  },
+  {
+    "day": "Friday",
+    "time": "19:30",
+    "question": "How can traders minimize losses? A) By increasing position sizes B) By setting stop-loss orders C) By following market trends D) By predicting market movements",
     "answer": "B"
   }
 ]

@@ -261,7 +261,8 @@ bot.on('message', async (ctx) => {
         '- Commands:\n' +
         '  /leaderboard - View top 5 scores\n' +
         '  /checkscore - Check your score\n' +
-        '  /help - Show this message',
+        '  /help - Show this message\n' +
+        '  /testquestion [number] - Admin tests a question (optional number 1-45)',
         { message_thread_id: THREAD_ID }
       );
       console.log('/help command processed successfully');
