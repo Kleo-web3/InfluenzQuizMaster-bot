@@ -1,3 +1,4 @@
+// @ts-nocheck
 require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const cron = require('node-cron');
@@ -35,6 +36,9 @@ async function loadQuestions() {
     questions = JSON.parse(data);
     questions = shuffleQuestions(questions); // Shuffle once at startup
     console.log(`Loaded and shuffled ${questions.length} questions`);
+    if (questions.length < 258) {
+      console.warn(`Warning: Only ${questions.length} questions loaded. Expected 258 for 43 sessions.`);
+    }
   } catch (error) {
     console.error('Error loading questions:', error);
     questions = [];
@@ -62,11 +66,27 @@ async function loadScores() {
       return;
     }
     const data = await fs.readFile(SCORES_FILE, 'utf8');
-    scores = JSON.parse(data);
+    if (!data.trim()) {
+      console.log('scores.json is empty, initializing empty scores');
+      scores = {};
+      await saveScores();
+      return;
+    }
+    const parsedScores = JSON.parse(data);
+    if (typeof parsedScores !== 'object' || parsedScores === null || Array.isArray(parsedScores)) {
+      console.error('scores.json contains invalid data, initializing empty scores');
+      scores = {};
+      await saveScores();
+      return;
+    }
+    scores = parsedScores;
     console.log(`Loaded scores:`, JSON.stringify(scores, null, 2));
   } catch (error) {
-    console.error('Error loading scores:', error);
-    scores = {};
+    console.error('Error loading scores, keeping existing scores:', error);
+    if (!scores || typeof scores !== 'object' || Array.isArray(scores)) {
+      scores = {};
+      await saveScores();
+    }
   }
 }
 
@@ -131,15 +151,6 @@ function getAnswerDescription(q) {
     'D': q.question.split(' D) ')[1]
   };
   return options[q.answer];
-}
-
-// Get current day and time in UTC (WAT is UTC+1)
-function getCurrentDayTime() {
-  const now = new Date();
-  const utc = new Date(now.getTime() + 1 * 60 * 60 * 1000); // WAT offset
-  const day = utc.toLocaleString('en-US', { weekday: 'long', timeZone: 'UTC' });
-  const time = utc.toLocaleString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
-  return { day, time };
 }
 
 // Post announcement 30 minutes before session
@@ -217,6 +228,9 @@ function scheduleSessionQuestions(sessionName, startHour, startMinute, day) {
         postQuestion(questions[qIndex]);
       } else {
         console.error(`No question available at index ${qIndex}`);
+        bot.telegram.sendMessage(GROUP_ID, 'Error: No more questions available. Please contact the admin.', {
+          message_thread_id: THREAD_ID
+        });
       }
       // Increment questionIndex after the last question in the session
       if (i === 5) questionIndex += 6;
@@ -256,7 +270,7 @@ async function scheduleQuestions() {
 
 // Handle answers
 bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
-  console.log(`Received answer: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}`);
+  console.log(`Received answer: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}, User ID: ${ctx.from.id}`);
   if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
     console.log(`Ignoring answer: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
     return;
@@ -271,19 +285,19 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
   }
 
   const userId = ctx.from.id;
-  const username = ctx.from.username || ctx.from.first_name || 'A user';
+  const username = ctx.from.username ? `@${ctx.from.username}` : ctx.from.first_name || 'A user';
   const answer = ctx.message.text.trim().toUpperCase();
 
   // Check if user has already submitted an attempt
   const attemptKey = `${userId}:${currentQuestion.question}`;
   if (firstAttempts.has(attemptKey)) {
-    console.log(`User ${username} already attempted: ${attemptKey}`);
+    console.log(`User ${username} (ID: ${userId}) already attempted: ${attemptKey}`);
     return;
   }
 
   // Record first attempt
   firstAttempts.set(attemptKey, answer);
-  console.log(`Recorded first attempt: ${username} -> ${answer}`);
+  console.log(`Recorded first attempt: ${username} (ID: ${userId}) -> ${answer}`);
 
   // Check answer
   try {
@@ -297,6 +311,7 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
         }
         scores[userId].points += 1;
         await saveScores(); // Save scores to file
+        console.log(`Score updated for ${username} (ID: ${userId}): ${scores[userId].points} points`);
         reply = `Correct, ${username}! You're the first to answer correctly and earned 1 point!`;
         clearTimeout(questionTimeout); // Prevent time's up overlap
       } else {
@@ -316,10 +331,10 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
         const nextQuestionHour = session.hour + Math.floor(nextQuestionMinute / 60);
         const adjustedMinute = nextQuestionMinute % 60;
         const nextTime = formatTime(nextQuestionHour, adjustedMinute);
-        reply += `\nThe next question will be posted at ${nextTime}.`;
+        reply = `${reply}\nThe next question will be posted at ${nextTime}.`;
       } else {
         const { name: nextSessionName, time: nextSessionTime, isNextDay, nextDayName } = getNextSessionDetails(currentQuestion.sessionName);
-        reply += `\nThis concludes the ${currentQuestion.sessionName} session! The next session (${nextSessionName}) starts at ${nextSessionTime}${isNextDay ? ` tomorrow, ${nextDayName}` : ''}.`;
+        reply = `${reply}\nThis concludes the ${currentQuestion.sessionName} session! The next session (${nextSessionName}) starts at ${nextSessionTime}${isNextDay ? ` tomorrow, ${nextDayName}` : ''}.`;
       }
 
       await ctx.reply(reply, { message_thread_id: THREAD_ID });
@@ -327,10 +342,10 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
       await ctx.reply(`Sorry, ${username}, that's incorrect. Try the next one!`, {
         message_thread_id: THREAD_ID
       });
-      console.log(`Incorrect answer by ${username}`);
+      console.log(`Incorrect answer by ${username} (ID: ${userId})`);
     }
   } catch (error) {
-    console.error('Error handling answer:', error);
+    console.error(`Error handling answer for ${username} (ID: ${userId}):`, error);
   }
 });
 
@@ -341,7 +356,7 @@ bot.on('message', async (ctx) => {
     return;
   }
 
-  console.log(`Received command: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}, Username: ${ctx.from.username || ctx.from.first_name}`);
+  console.log(`Received command: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}, User ID: ${ctx.from.id}, Username: ${ctx.from.username || ctx.from.first_name}`);
   if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
     console.log(`Ignoring command: Chat ID match: ${String(ctx.chat.id) === GROUP_ID}, Thread ID match: ${String(ctx.message.message_thread_id) === THREAD_ID}`);
     return;
@@ -365,26 +380,47 @@ bot.on('message', async (ctx) => {
         '- Commands:\n' +
         '  /leaderboard - View top 5 scores\n' +
         '  /checkscore - Check your score\n' +
+        '  /sessions - List session times\n' +
         '  /help - Show this message\n' +
         '  /testquestion [number] - Admin tests a question (optional number 1-258)',
         { message_thread_id: THREAD_ID }
       );
       console.log('/help command processed successfully');
+    } else if (commandText === 'sessions') {
+      await ctx.reply(
+        'Quiz Session Times (UTC, Monday–Friday):\n' +
+        'Morning Session: 10:00 UTC\n' +
+        'Noon Session: 14:00 UTC\n' +
+        'Evening Session: 19:30 UTC\n' +
+        'Announcements are posted 30 minutes before each session.',
+        { message_thread_id: THREAD_ID }
+      );
+      console.log('/sessions command processed successfully');
     } else if (commandText === 'leaderboard') {
       const sortedScores = Object.values(scores)
         .sort((a, b) => b.points - a.points)
         .slice(0, 5);
       let message = '🏆 *Leaderboard (Top 5)* 🏆\n\n';
       message += 'Username         Points\n';
-      sortedScores.forEach((s) => {
-        message += `${s.username.padEnd(15)} ${s.points}\n`;
-      });
+      if (sortedScores.length === 0) {
+        message += 'No scores yet.\n';
+      } else {
+        sortedScores.forEach((s) => {
+          message += `${s.username.padEnd(15)} ${s.points}\n`;
+        });
+      }
       const sentMessage = await ctx.reply(message, {
         parse_mode: 'Markdown',
         message_thread_id: THREAD_ID
       });
       setTimeout(() => {
-        bot.telegram.deleteMessage(GROUP_ID, sentMessage.message_id).catch(console.error);
+        bot.telegram.deleteMessage(GROUP_ID, sentMessage.message_id).catch((error) => {
+          if (error.response?.error_code === 400) {
+            console.log('Leaderboard message already deleted, ignoring error');
+          } else {
+            console.error('Error deleting leaderboard message:', error);
+          }
+        });
       }, 2 * 60 * 1000); // Delete after 2 minutes
       console.log('/leaderboard command processed successfully');
     } else if (commandText === 'checkscore') {
@@ -435,7 +471,10 @@ bot.on('message', async (ctx) => {
       console.log(`Unknown command: ${commandText}`);
     }
   } catch (error) {
-    console.error(`Error in command ${commandText}:`, error);
+    console.error(`Error in command ${commandText} for User ID ${ctx.from.id}:`, error);
+    await ctx.reply('Error processing command. Please try again.', {
+      message_thread_id: THREAD_ID
+    });
   }
 });
 
@@ -449,9 +488,13 @@ cron.schedule('0 7,19 * * 6', async () => {
 
     let message = '🏆 *Weekly Leaderboard (Top 5)* 🏆\n\n';
     message += 'Username         Points\n';
-    sortedScores.forEach((s) => {
-      message += `${s.username.padEnd(15)} ${s.points}\n`;
-    });
+    if (sortedScores.length === 0) {
+      message += 'No scores yet.\n';
+    } else {
+      sortedScores.forEach((s) => {
+        message += `${s.username.padEnd(15)} ${s.points}\n`;
+      });
+    }
 
     const sentMessage = await bot.telegram.sendMessage(GROUP_ID, message, {
       parse_mode: 'Markdown',
