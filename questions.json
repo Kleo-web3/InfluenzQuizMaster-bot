@@ -1,272 +1,838 @@
 [
   {
-    "day": "Monday",
-    "time": "10:00",
-    "question": "What is risk management in trading? A) Maximizing profits B) Minimizing losses C) Predicting market movements D) Following market trends",
+    "question": "What is risk management in crypto trading? A) Maximizing profits B) Minimizing losses C) Predicting market movements D) Following market trends",
     "answer": "B"
   },
   {
-    "day": "Monday",
-    "time": "14:00",
-    "question": "How can traders stay disciplined? A) By setting clear trading goals and rules B) By following market trends C) By predicting market movements D) By increasing position sizes",
+    "question": "What is a stop-loss order in crypto trading? A) An order to buy at a specific price B) An order to sell at a specific price to limit losses C) An order to take profits D) An order to follow trends",
+    "answer": "B"
+  },
+  {
+    "question": "What is leverage in crypto trading? A) Borrowing funds to increase trade size B) Reducing risk C) Following market trends D) Analyzing charts",
     "answer": "A"
   },
   {
-    "day": "Monday",
-    "time": "19:30",
-    "question": "What is the role of risk-reward ratio in trading? A) To predict market movements B) To follow market trends C) To determine potential profits and losses D) To maximize profits",
-    "answer": "C"
+    "question": "What is a candlestick chart in crypto trading? A) A chart showing market trends B) A chart showing price movements over time C) A chart for predictions D) A chart for news",
+    "answer": "B"
   },
   {
-    "day": "Tuesday",
-    "time": "10:00",
-    "question": "How can traders manage emotions? A) By taking breaks and staying calm B) By increasing position sizes C) By following market trends D) By predicting market movements",
+    "question": "What is a bull market in crypto? A) A market with rising prices B) A market with falling prices C) A stable market D) A volatile market",
     "answer": "A"
   },
   {
-    "day": "Tuesday",
-    "time": "14:00",
-    "question": "How can traders stay adaptable? A) By sticking to a single trading strategy B) By adjusting strategies according to market conditions C) By predicting market movements D) By following market trends",
+    "question": "What is a bear market in crypto? A) A market with rising prices B) A market with falling prices C) A stable market D) A volatile market",
     "answer": "B"
   },
   {
-    "day": "Tuesday",
-    "time": "19:30",
-    "question": "What is the role of patience in trading? A) To enter trades quickly B) To wait for trading opportunities C) To predict market movements D) To follow market trends",
+    "question": "What is volatility in crypto trading? A) Stability in prices B) Rapid price changes C) Predictable trends D) Low liquidity",
     "answer": "B"
   },
   {
-    "day": "Wednesday",
-    "time": "10:00",
-    "question": "How can traders stay focused? A) By setting clear trading goals and priorities B) By following market trends C) By predicting market movements D) By increasing position sizes",
+    "question": "What is a crypto trading platform? A) A tool for market news B) A software for executing trades C) A market trend D) A profit tracker",
+    "answer": "B"
+  },
+  {
+    "question": "What is a blockchain? A) A centralized database B) A decentralized ledger of transactions C) A type of cryptocurrency D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is Bitcoin? A) A stablecoin B) A decentralized cryptocurrency C) A centralized payment system D) A type of NFT",
+    "answer": "B"
+  },
+  {
+    "question": "What is Ethereum? A) A cryptocurrency exchange B) A blockchain platform with smart contracts C) A type of stablecoin D) A wallet application",
+    "answer": "B"
+  },
+  {
+    "question": "What is a smart contract? A) A legally binding contract B) A self-executing code on a blockchain C) A type of cryptocurrency D) A trading algorithm",
+    "answer": "B"
+  },
+  {
+    "question": "What is DeFi? A) Decentralized Finance B) Digital Fiat C) Distributed Funding D) Direct Financing",
     "answer": "A"
   },
   {
-    "day": "Wednesday",
-    "time": "14:00",
-    "question": "What is the importance of trading psychology? A) To predict market movements B) To follow market trends C) To manage emotions and stay disciplined D) To maximize profits",
-    "answer": "C"
-  },
-  {
-    "day": "Wednesday",
-    "time": "19:30",
-    "question": "How can traders stay consistent? A) By changing trading strategies frequently B) By sticking to a trading plan C) By predicting market movements D) By following market trends",
+    "question": "What is an NFT? A) A type of cryptocurrency B) A non-fungible token C) A trading strategy D) A blockchain protocol",
     "answer": "B"
   },
   {
-    "day": "Thursday",
-    "time": "10:00",
-    "question": "What is the importance of self-reflection in trading? A) To predict market movements B) To follow market trends C) To identify areas for improvement D) To maximize profits",
-    "answer": "C"
+    "question": "What is a crypto wallet? A) A physical device for storing coins B) A software or device for storing private keys C) A trading platform D) A type of blockchain",
+    "answer": "B"
   },
   {
-    "day": "Thursday",
-    "time": "14:00",
-    "question": "How can traders stay motivated? A) By setting clear trading goals and tracking progress B) By following market trends C) By predicting market movements D) By increasing position sizes",
+    "question": "What is a private key? A) A public address for receiving funds B) A secret code for accessing crypto assets C) A type of blockchain D) A trading signal",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto exchange? A) A wallet for storing tokens B) A platform for trading cryptocurrencies C) A blockchain protocol D) A type of smart contract",
+    "answer": "B"
+  },
+  {
+    "question": "What is a decentralized exchange (DEX)? A) A centralized trading platform B) A peer-to-peer trading platform without intermediaries C) A type of wallet D) A stablecoin",
+    "answer": "B"
+  },
+  {
+    "question": "What is a stablecoin? A) A cryptocurrency with volatile price B) A cryptocurrency pegged to a stable asset C) A type of NFT D) A trading strategy",
+    "answer": "B"
+  },
+  {
+    "question": "What is a gas fee? A) A fee for trading crypto B) A fee for executing transactions on a blockchain C) A fee for storing crypto D) A fee for mining",
+    "answer": "B"
+  },
+  {
+    "question": "What is staking in crypto? A) Trading cryptocurrencies B) Locking tokens to support a blockchain and earn rewards C) Mining new coins D) Creating NFTs",
+    "answer": "B"
+  },
+  {
+    "question": "What is a DAO? A) A decentralized autonomous organization B) A digital asset offering C) A type of cryptocurrency D) A trading platform",
     "answer": "A"
   },
   {
-    "day": "Thursday",
-    "time": "19:30",
-    "question": "What is the primary benefit of diversification in investing? A) Increased potential returns B) Reduced risk C) Increased liquidity D) Simplified portfolio management",
+    "question": "What is a crypto airdrop? A) A market crash B) A free distribution of tokens C) A type of NFT D) A trading strategy",
     "answer": "B"
   },
   {
-    "day": "Friday",
-    "time": "10:00",
-    "question": "What is a common mistake made by new traders? A) Over-diversification B) Insufficient risk management C) Over-reliance on technical analysis D) Lack of patience",
+    "question": "What is a crypto pump and dump? A) A legitimate trading strategy B) A scheme to artificially inflate and sell off tokens C) A type of wallet D) A blockchain protocol",
     "answer": "B"
   },
   {
-    "day": "Friday",
-    "time": "14:00",
-    "question": "What is a market order? A) An order to buy or sell at the best available price B) An order to buy or sell at a specific price C) An order to limit losses D) An order to take profits",
+    "question": "What is a crypto order book? A) A list of buy and sell orders on an exchange B) A record of blockchain transactions C) A type of wallet D) A trading algorithm",
     "answer": "A"
   },
   {
-    "day": "Friday",
-    "time": "19:30",
-    "question": "What is a limit order? A) An order to buy or sell at the best available price B) An order to buy or sell at a specific price or better C) An order to limit losses D) An order to take profits",
+    "question": "What is slippage in crypto trading? A) A market trend B) The difference between expected and executed trade price C) A type of order D) A wallet feature",
     "answer": "B"
   },
   {
-    "day": "Monday",
-    "time": "10:00",
-    "question": "What is the purpose of a trading journal? A) To predict market trends B) To track and analyze trading performance C) To follow market news D) To increase trade sizes",
+    "question": "What is a crypto liquidity pool? A) A pool of stablecoins B) A collection of tokens for trading on a DEX C) A type of wallet D) A blockchain protocol",
     "answer": "B"
   },
   {
-    "day": "Monday",
-    "time": "14:00",
-    "question": "Why is liquidity important in trading? A) It ensures high profits B) It allows easy entry and exit from trades C) It predicts market movements D) It reduces trading fees",
+    "question": "What is a crypto hard fork? A) A minor blockchain update B) A major blockchain split creating a new chain C) A type of wallet D) A trading strategy",
     "answer": "B"
   },
   {
-    "day": "Monday",
-    "time": "19:30",
-    "question": "What is technical analysis? A) Predicting market trends B) Analyzing historical price data C) Following market news D) Managing emotions",
-    "answer": "B"
-  },
-  {
-    "day": "Tuesday",
-    "time": "10:00",
-    "question": "What is fundamental analysis? A) Analyzing price charts B) Evaluating a company's financial health C) Following market trends D) Predicting market movements",
-    "answer": "B"
-  },
-  {
-    "day": "Tuesday",
-    "time": "14:00",
-    "question": "What is a stop-loss order? A) An order to buy at a specific price B) An order to sell at a specific price to limit losses C) An order to take profits D) An order to follow trends",
-    "answer": "B"
-  },
-  {
-    "day": "Tuesday",
-    "time": "19:30",
-    "question": "What is leverage in trading? A) Borrowing funds to increase trade size B) Reducing risk C) Following market trends D) Analyzing charts",
+    "question": "What is a crypto soft fork? A) A backward-compatible blockchain update B) A complete blockchain split C) A type of NFT D) A trading platform",
     "answer": "A"
   },
   {
-    "day": "Wednesday",
-    "time": "10:00",
-    "question": "What is a trading plan? A) A set of rules for trading decisions B) A prediction of market trends C) A way to follow news D) A method to increase profits",
+    "question": "What is a crypto token? A) A physical coin B) A digital asset on a blockchain C) A type of exchange D) A trading signal",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto burn? A) Destroying tokens to reduce supply B) A market crash C) A type of wallet D) A trading strategy",
     "answer": "A"
   },
   {
-    "day": "Wednesday",
-    "time": "14:00",
-    "question": "Why is diversification important? A) To increase profits B) To reduce risk C) To predict markets D) To follow trends",
+    "question": "What is a crypto whale? A) A large blockchain network B) A trader with significant holdings C) A type of stablecoin D) A trading platform",
     "answer": "B"
   },
   {
-    "day": "Wednesday",
-    "time": "19:30",
-    "question": "What is a candlestick chart? A) A chart showing market trends B) A chart showing price movements over time C) A chart for predictions D) A chart for news",
+    "question": "What is a crypto limit order? A) An order to buy/sell at the best price B) An order to buy/sell at a specific price C) An order to stake tokens D) An order to mine coins",
     "answer": "B"
   },
   {
-    "day": "Thursday",
-    "time": "10:00",
-    "question": "What is a bull market? A) A market with rising prices B) A market with falling prices C) A stable market D) A volatile market",
+    "question": "What is a crypto market maker? A) A trader providing liquidity B) A blockchain developer C) A type of wallet D) A stablecoin issuer",
     "answer": "A"
   },
   {
-    "day": "Thursday",
-    "time": "14:00",
-    "question": "What is a bear market? A) A market with rising prices B) A market with falling prices C) A stable market D) A volatile market",
-    "answer": "B"
-  },
-  {
-    "day": "Thursday",
-    "time": "19:30",
-    "question": "What is volatility in trading? A) Stability in prices B) Rapid price changes C) Predictable trends D) Low liquidity",
-    "answer": "B"
-  },
-  {
-    "day": "Friday",
-    "time": "10:00",
-    "question": "What is a breakout in trading? A) A price movement beyond a key level B) A stable price C) A market crash D) A trend reversal",
+    "question": "What is a crypto arbitrage? A) Trading the same asset across exchanges for profit B) Staking tokens C) Mining coins D) Creating NFTs",
     "answer": "A"
   },
   {
-    "day": "Friday",
-    "time": "14:00",
-    "question": "What is a trend in trading? A) A random price movement B) A consistent price direction C) A stable price D) A market crash",
+    "question": "What is a crypto wallet seed phrase? A) A public address B) A set of words to recover a wallet C) A type of token D) A trading signal",
     "answer": "B"
   },
   {
-    "day": "Friday",
-    "time": "19:30",
-    "question": "What is a moving average? A) A tool to predict prices B) A tool to smooth price data C) A tool for news D) A tool for profits",
+    "question": "What is a crypto rug pull? A) A legitimate project launch B) A scam where developers abandon a project C) A type of exchange D) A trading strategy",
     "answer": "B"
   },
   {
-    "day": "Monday",
-    "time": "10:00",
-    "question": "What is a margin call? A) A request for more funds to cover losses B) A profit-taking order C) A market trend D) A stable price",
+    "question": "What is a crypto yield farming? A) Mining new coins B) Earning rewards by providing liquidity C) Trading NFTs D) Creating smart contracts",
+    "answer": "B"
+  },
+  {
+    "question": "What is Proof of Stake (PoS)? A) A mining-based consensus B) A consensus where validators stake tokens C) A type of stablecoin D) A trading strategy",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto flash loan? A) A traditional bank loan B) An uncollateralized loan in DeFi C) A type of NFT D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is the RSI indicator in crypto trading? A) A tool for stablecoin pricing B) A momentum indicator for overbought/oversold conditions C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto multisig wallet? A) A wallet with one key B) A wallet requiring multiple signatures C) A type of exchange D) A trading signal",
+    "answer": "B"
+  },
+  {
+    "question": "What is EIP-1559? A) A Bitcoin upgrade B) An Ethereum fee market reform C) A type of NFT D) A trading strategy",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto NFT marketplace? A) A platform for trading stocks B) A platform for buying/selling NFTs C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto scam token? A) A legitimate token B) A token created to deceive investors C) A type of stablecoin D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto hardware wallet? A) A software wallet B) A physical device for storing keys C) A type of exchange D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto trading pair? A) Two traders collaborating B) Two assets traded against each other C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto faucet? A) A trading strategy B) A service giving free crypto for tasks C) A type of NFT D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto ICO? A) A trading platform B) An initial coin offering C) A type of wallet D) A stablecoin",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto IDO? A) An initial DEX offering B) A centralized exchange launch C) A type of NFT D) A trading signal",
     "answer": "A"
   },
   {
-    "day": "Monday",
-    "time": "14:00",
-    "question": "What is a pip in forex trading? A) A unit of price movement B) A type of order C) A market trend D) A profit measure",
-    "answer": "A"
-  },
-  {
-    "day": "Monday",
-    "time": "19:30",
-    "question": "What is a lot in trading? A) A unit of trade size B) A type of chart C) A market trend D) A profit measure",
-    "answer": "A"
-  },
-  {
-    "day": "Tuesday",
-    "time": "10:00",
-    "question": "What is a demo account? A) A real trading account B) A practice trading account C) A market analysis tool D) A profit tracker",
+    "question": "What is a crypto memecoin? A) A coin backed by assets B) A coin driven by community hype C) A type of stablecoin D) A blockchain protocol",
     "answer": "B"
   },
   {
-    "day": "Tuesday",
-    "time": "14:00",
-    "question": "What is a spread in trading? A) The difference between bid and ask prices B) A type of order C) A market trend D) A profit measure",
+    "question": "What is a crypto governance token? A) A token for trading B) A token for voting in a protocol C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto layer-2 solution? A) A primary blockchain B) A secondary network for scalability C) A type of wallet D) A trading strategy",
+    "answer": "B"
+  },
+  {
+    "question": "What is the Lightning Network? A) A Bitcoin trading platform B) A Bitcoin layer-2 for fast transactions C) A type of NFT D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto MACD indicator? A) A tool for stablecoin pricing B) A trend-following momentum indicator C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto OCO order? A) A one-cancels-the-other order B) A market order C) A type of NFT D) A wallet feature",
     "answer": "A"
   },
   {
-    "day": "Tuesday",
-    "time": "19:30",
-    "question": "What is a take-profit order? A) An order to limit losses B) An order to lock in profits C) An order to follow trends D) An order to predict prices",
+    "question": "What is a crypto trailing stop? A) A fixed stop-loss B) A stop-loss that adjusts with price C) A type of exchange D) A trading platform",
     "answer": "B"
   },
   {
-    "day": "Wednesday",
-    "time": "10:00",
-    "question": "What is a trading strategy? A) A random trade decision B) A set of rules for trading C) A market prediction D) A profit guarantee",
+    "question": "What is a crypto KYC process? A) A trading strategy B) A know-your-customer verification C) A type of wallet D) A blockchain protocol",
     "answer": "B"
   },
   {
-    "day": "Wednesday",
-    "time": "14:00",
-    "question": "What is a support level? A) A price where buying is strong B) A price where selling is strong C) A market trend D) A profit level",
+    "question": "What is a crypto AML regulation? A) Anti-money laundering rules B) A trading algorithm C) A type of NFT D) A wallet feature",
     "answer": "A"
   },
   {
-    "day": "Wednesday",
-    "time": "19:30",
-    "question": "What is a resistance level? A) A price where buying is strong B) A price where selling is strong C) A market trend D) A profit level",
+    "question": "What is a crypto impermanent loss? A) A permanent trading loss B) A temporary loss in liquidity pools C) A type of scam D) A market crash",
     "answer": "B"
   },
   {
-    "day": "Thursday",
-    "time": "10:00",
-    "question": "What is a trading platform? A) A tool for market news B) A software for executing trades C) A market trend D) A profit tracker",
+    "question": "What is a crypto AMM? A) A centralized exchange B) An automated market maker for DEXs C) A type of wallet D) A blockchain protocol",
     "answer": "B"
   },
   {
-    "day": "Thursday",
-    "time": "14:00",
-    "question": "What is a drawdown? A) A profit increase B) A reduction in account balance C) A market trend D) A type of order",
+    "question": "What is a crypto lending protocol? A) A platform for trading B) A platform for borrowing/lending crypto C) A type of NFT D) A wallet feature",
     "answer": "B"
   },
   {
-    "day": "Thursday",
-    "time": "19:30",
-    "question": "What is a trading session? A) A period of market activity B) A type of order C) A market trend D) A profit measure",
+    "question": "What is Aave? A) A cryptocurrency exchange B) A DeFi lending protocol C) A type of stablecoin D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is Compound? A) A trading platform B) A DeFi lending protocol C) A type of NFT D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto royalty in NFTs? A) A trading fee B) A percentage paid to NFT creators on resales C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is OpenSea? A) A crypto exchange B) An NFT marketplace C) A type of wallet D) A trading strategy",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto fractional NFT? A) A single NFT B) An NFT split into shares C) A type of stablecoin D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is IPFS in Web3? A) A centralized server B) A decentralized file storage system C) A type of NFT D) A trading algorithm",
+    "answer": "B"
+  },
+  {
+    "question": "What is ENS in Web3? A) A trading platform B) A decentralized domain name system C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto metaverse? A) A trading platform B) A virtual world using blockchain C) A type of stablecoin D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is Solana? A) A cryptocurrency exchange B) A high-speed blockchain platform C) A type of NFT D) A trading strategy",
+    "answer": "B"
+  },
+  {
+    "question": "What is Polkadot? A) A trading platform B) A blockchain for interoperability C) A type of wallet D) A stablecoin",
+    "answer": "B"
+  },
+  {
+    "question": "What is Cardano? A) A cryptocurrency exchange B) A proof-of-stake blockchain C) A type of NFT D) A trading algorithm",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto phishing scam? A) A legitimate airdrop B) A scam to steal private keys C) A type of exchange D) A trading strategy",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto 2FA? A) A trading indicator B) Two-factor authentication for security C) A type of NFT D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto tax? A) A fee for trading B) A tax on crypto gains C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto Bollinger Band? A) A wallet feature B) A volatility indicator for trading C) A type of NFT D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto market depth? A) A trading platform B) A measure of order book liquidity C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto futures contract? A) A spot trade B) An agreement to buy/sell at a future price C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto perpetual swap? A) A fixed-term contract B) A futures contract without expiry C) A type of stablecoin D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto margin trading? A) Trading without leverage B) Trading with borrowed funds C) A type of NFT D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto cold wallet? A) An online wallet B) An offline wallet for security C) A type of exchange D) A trading strategy",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto hot wallet? A) An offline wallet B) An online wallet for convenience C) A type of NFT D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto paper wallet? A) A digital wallet B) A physical printout of keys C) A type of exchange D) A trading algorithm",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto bridge? A) A trading platform B) A protocol for transferring assets between blockchains C) A type of wallet D) A stablecoin",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto oracle? A) A trading indicator B) A service providing off-chain data to blockchains C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is Chainlink? A) A cryptocurrency exchange B) A decentralized oracle network C) A type of stablecoin D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto governance proposal? A) A trading strategy B) A community vote on protocol changes C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto tokenomics? A) A trading platform B) The economic design of a token C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto vesting period? A) A trading lockup B) A period before tokens are fully accessible C) A type of exchange D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto layer-1 blockchain? A) A secondary network B) A primary blockchain protocol C) A type of wallet D) A trading strategy",
+    "answer": "B"
+  },
+  {
+    "question": "What is Optimism? A) A trading platform B) An Ethereum layer-2 solution C) A type of NFT D) A stablecoin",
+    "answer": "B"
+  },
+  {
+    "question": "What is Arbitrum? A) A cryptocurrency exchange B) An Ethereum layer-2 solution C) A type of wallet D) A trading algorithm",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto sharding? A) A trading strategy B) A blockchain scaling technique C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto sidechain? A) A primary blockchain B) A secondary blockchain linked to a main chain C) A type of exchange D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is Polygon? A) A trading platform B) An Ethereum layer-2 scaling solution C) A type of stablecoin D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto consensus mechanism? A) A trading algorithm B) A method for validating blockchain transactions C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is Proof of Work (PoW)? A) A staking protocol B) A consensus requiring computational work C) A type of stablecoin D) A trading strategy",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto mining pool? A) A trading platform B) A group of miners sharing resources C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto 51% attack? A) A trading scam B) A takeover of blockchain consensus C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto dust attack? A) A trading strategy B) A scam sending small amounts to track wallets C) A type of exchange D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto Sybil attack? A) A trading platform B) An attack using multiple fake identities C) A type of wallet D) A stablecoin",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto replay attack? A) A trading scam B) Reusing transaction data post-fork C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto double-spend? A) Spending the same funds twice B) A trading strategy C) A type of exchange D) A blockchain protocol",
     "answer": "A"
   },
   {
-    "day": "Friday",
-    "time": "10:00",
-    "question": "What is continuous learning in trading? A) Learning from trading experiences and improving strategies B) Following market trends and predictions C) Sticking to a single trading strategy D) Ignoring market analysis and news",
-    "answer": "A"
+    "question": "What is a crypto wrapped token? A) A native token B) A token representing another asset C) A type of wallet D) A trading platform",
+    "answer": "B"
   },
   {
-    "day": "Friday",
-    "time": "14:00",
-    "question": "What is key to staying profitable in trading? A) Predicting market movements B) Following market trends C) Risk management and discipline D) Maximizing profits",
-    "answer": "C"
+    "question": "What is WBTC? A) A trading platform B) Wrapped Bitcoin on Ethereum C) A type of NFT D) A stablecoin",
+    "answer": "B"
   },
   {
-    "day": "Friday",
-    "time": "19:30",
-    "question": "How can traders minimize losses? A) By increasing position sizes B) By setting stop-loss orders C) By following market trends D) By predicting market movements",
+    "question": "What is a crypto atomic swap? A) A trading platform B) A direct cross-chain trade C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto cross-chain bridge? A) A trading strategy B) A protocol for inter-blockchain transfers C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto liquidity provider? A) A trader executing orders B) A user supplying tokens to a DEX pool C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is Uniswap? A) A cryptocurrency exchange B) A decentralized exchange protocol C) A type of stablecoin D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is SushiSwap? A) A trading platform B) A decentralized exchange protocol C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto staking pool? A) A trading platform B) A group pooling tokens for staking C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto vault? A) A trading strategy B) A secure storage for crypto assets C) A type of NFT D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto custodial wallet? A) A user-controlled wallet B) A wallet managed by a third party C) A type of exchange D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto non-custodial wallet? A) A third-party wallet B) A user-controlled wallet C) A type of NFT D) A trading strategy",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto gas limit? A) A trading cap B) The maximum computational work for a transaction C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto gas price? A) A trading fee B) The cost per unit of gas on a blockchain C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto transaction hash? A) A trading signal B) A unique identifier for a transaction C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto block height? A) A trading metric B) The number of blocks in a blockchain C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto block reward? A) A trading bonus B) A reward for mining a block C) A type of exchange D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto difficulty bomb? A) A trading crash B) A mechanism to increase mining difficulty C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is the Ethereum Merge? A) A trading platform B) A shift to Proof of Stake C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto uncle block? A) A trading block B) A valid but not included block C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto reorg? A) A trading strategy B) A blockchain reorganization C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto rollup? A) A trading platform B) A layer-2 scaling solution C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto optimistic rollup? A) A trading strategy B) A layer-2 assuming valid transactions C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto zk-rollup? A) A trading platform B) A layer-2 using zero-knowledge proofs C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto state channel? A) A trading channel B) A layer-2 for off-chain transactions C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto plasma chain? A) A trading platform B) A layer-2 scaling solution C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto child chain? A) A trading chain B) A secondary blockchain linked to a parent C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto root chain? A) A trading platform B) A primary blockchain for layer-2 C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto finality? A) A trading close B) The assurance a transaction is irreversible C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto checkpoint? A) A trading signal B) A snapshot of blockchain state C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto slashing? A) A trading loss B) A penalty for validator misbehavior C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto validator? A) A trader B) A node securing a blockchain C) A type of wallet D) A trading platform",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto delegator? A) A trader B) A user assigning stake to a validator C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto bonding period? A) A trading lock B) A period for staking tokens C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto unbonding period? A) A trading unlock B) A period to withdraw staked tokens C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto epoch? A) A trading cycle B) A fixed period in blockchain consensus C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto slot? A) A trading position B) A time unit for block production C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto beacon chain? A) A trading platform B) A chain coordinating consensus C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto shard chain? A) A trading chain B) A blockchain segment for scaling C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto cross-shard transaction? A) A trading swap B) A transaction across blockchain shards C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto state root? A) A trading metric B) A hash of blockchain state C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto Merkle tree? A) A trading structure B) A data structure for transaction verification C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto Merkle root? A) A trading signal B) The top hash of a Merkle tree C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto nonce? A) A trading counter B) A number used once in transactions C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto hash rate? A) A trading speed B) The computational power for mining C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto difficulty? A) A trading challenge B) The complexity of mining a block C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto halving? A) A trading cut B) A reduction in block rewards C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto faucet reward? A) A trading bonus B) Free crypto for completing tasks C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto testnet? A) A trading platform B) A blockchain for testing C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto mainnet? A) A trading network B) A live blockchain network C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto devnet? A) A trading platform B) A blockchain for developers C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto faucet drip? A) A trading signal B) A small crypto reward C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto liquidity mining? A) A trading strategy B) Earning rewards for providing liquidity C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto farming pool? A) A trading pool B) A group providing liquidity for rewards C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto swap? A) A trading platform B) An exchange of one token for another C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto pool fee? A) A trading fee B) A fee for liquidity pool transactions C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto trading bot? A) A wallet feature B) An automated trading program C) A type of NFT D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto market sentiment? A) A trading platform B) The overall trader mood C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto fear and greed index? A) A trading strategy B) A measure of market sentiment C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto whale watching? A) A trading platform B) Monitoring large transactions C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto on-chain analysis? A) A trading signal B) Analyzing blockchain data C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto off-chain transaction? A) A trading swap B) A transaction not recorded on the blockchain C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto payment gateway? A) A trading platform B) A service for crypto payments C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto debit card? A) A trading card B) A card for spending crypto C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto custody solution? A) A trading strategy B) A secure storage service C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto OTC trading? A) A retail trade B) An over-the-counter large trade C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto dark pool? A) A trading platform B) A private trading venue C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto market cap? A) A trading fee B) The total value of a cryptocurrency C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto circulating supply? A) A trading metric B) The number of tokens in circulation C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto total supply? A) A trading cap B) The total tokens created C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto max supply? A) A trading limit B) The maximum tokens possible C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto inflation rate? A) A trading rate B) The rate of new token creation C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto deflationary token? A) A token with increasing supply B) A token with decreasing supply C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto burn rate? A) A trading speed B) The rate of token destruction C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto whitepaper? A) A trading guide B) A document outlining a project C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto roadmap? A) A trading plan B) A project’s development timeline C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto community governance? A) A trading strategy B) Community decision-making for a protocol C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto snapshot? A) A trading image B) A record of token balances C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto airdrop snapshot? A) A trading signal B) A record for airdrop eligibility C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto lockup period? A) A trading halt B) A period tokens are restricted C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto cliff? A) A market drop B) A delay before token vesting C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto vesting schedule? A) A trading plan B) A timeline for token release C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto treasury? A) A trading fund B) A project’s token reserve C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto grant? A) A trading bonus B) Funding for project development C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto bounty? A) A trading reward B) A reward for tasks like bug hunting C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto hackathon? A) A trading event B) A coding competition for blockchain C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto dApp? A) A trading app B) A decentralized application C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto SDK? A) A trading kit B) A software development kit for blockchain C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto API? A) A trading interface B) A programming interface for blockchain C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto wallet connect? A) A trading connection B) A protocol for dApp-wallet integration C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto frontend? A) A trading dashboard B) The user interface of a dApp C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto backend? A) A trading server B) The server-side logic of a dApp C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto smart contract audit? A) A trading review B) A security check of contract code C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto bug bounty? A) A trading reward B) A reward for finding vulnerabilities C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto formal verification? A) A trading proof B) A mathematical proof of contract correctness C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto gas optimization? A) A trading strategy B) Reducing transaction costs C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto reentrancy attack? A) A trading scam B) A vulnerability in smart contracts C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto front-running? A) A trading strategy B) Exploiting transaction order C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto MEV? A) A trading metric B) Miner extractable value C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto flash crash? A) A trading platform B) A sudden market drop C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto whale dump? A) A trading strategy B) A large sell-off by a whale C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto market manipulation? A) A trading platform B) Illegal price influencing C) A type of wallet D) A blockchain protocol",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto spoofing? A) A trading scam B) Placing fake orders to manipulate prices C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto wash trading? A) A trading platform B) Trading to inflate volume C) A type of wallet D) A blockchain update",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto liquidity crisis? A) A trading halt B) A lack of market liquidity C) A type of NFT D) A wallet feature",
+    "answer": "B"
+  },
+  {
+    "question": "What is a crypto order spoofing? A) A trading strategy B) Placing deceptive orders C) A type of wallet D) A blockchain protocol",
     "answer": "B"
   }
 ]
