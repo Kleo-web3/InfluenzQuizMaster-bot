@@ -10,14 +10,24 @@ const bot = new TelegramBot(token, { polling: true });
 let questions = [];
 let currentQuestion = null;
 let scheduledTasks = [];
+let questionIndex = 0; // Tracks current question for sequential selection
 
 console.log('Starting bot...');
+
+function shuffleQuestions(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
 
 function loadQuestions() {
   try {
     const data = fs.readFileSync('questions.json');
     questions = JSON.parse(data);
-    console.log(`Loaded ${questions.length} questions`);
+    questions = shuffleQuestions(questions); // Shuffle once at startup
+    console.log(`Loaded and shuffled ${questions.length} questions`);
   } catch (error) {
     console.error('Error loading questions:', error);
   }
@@ -38,11 +48,19 @@ function getNextSessionDetails(currentSessionName) {
   const currentIndex = sessions.findIndex(s => s.name === currentSessionName);
   const nextIndex = (currentIndex + 1) % sessions.length;
   const nextSession = sessions[nextIndex];
-  const isNextDay = nextIndex === 0; // Next session is Morning, implying next day
+  const isNextDay = nextIndex === 0;
+
+  // Get next day's name for Evening
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const today = new Date();
+  const nextDayIndex = (today.getDay() + 1) % 7;
+  const nextDayName = isNextDay ? days[nextDayIndex] : '';
+
   return {
     name: nextSession.name,
     time: formatTime(nextSession.hour, nextSession.minute),
-    isNextDay
+    isNextDay,
+    nextDayName
   };
 }
 
@@ -123,9 +141,16 @@ function scheduleSessionQuestions() {
       const cronTime = `${adjustedMinute} ${questionHour} * * Monday-Friday`;
 
       scheduledTasks.push(cron.schedule(cronTime, () => {
-        const startIndex = Math.floor(Math.random() * (questions.length - 6));
-        const questionIndex = startIndex + i;
-        postQuestion(groupId, questionIndex, name, i + 1);
+        const qIndex = questionIndex + i; // Use sequential questions
+        if (qIndex < questions.length) {
+          postQuestion(groupId, qIndex, name, i + 1);
+        } else {
+          console.log('No more questions available');
+        }
+        // Increment questionIndex after the last question in the session
+        if (i === 5) {
+          questionIndex += 6;
+        }
       }, { timezone: 'UTC' }));
       console.log(`Scheduling question ${i + 1} for ${name} session: ${cronTime}`);
     }
@@ -140,32 +165,32 @@ bot.on('message', (msg) => {
     if (['A', 'B', 'C', 'D'].includes(userAnswer) && !currentQuestion.answered) {
       if (userAnswer === currentQuestion.correctAnswer) {
         currentQuestion.answered = true;
-        const username = msg.from.username ? `@${msg.from.username}` : msg.from.first_name;
+        const username = msg.from.username ? `@${msg.from.username}` : msg.from.first_name || 'A user';
         let announcement = `Correct! ${username} gets a point!`;
 
         if (currentQuestion.questionNumber < 6) {
-          // Announce next question time (5 minutes later)
+          // Next question time (5 minutes later)
           const session = [
             { name: 'Morning', hour: 10, minute: 0 },
             { name: 'Noon', hour: 14, minute: 0 },
             { name: 'Evening', hour: 19, minute: 30 }
           ].find(s => s.name === currentQuestion.sessionName);
-          const questionTime = currentQuestion.questionNumber * 5; // Minutes since session start
-          const nextQuestionMinute = session.minute + questionTime + 5;
+          const currentQuestionTime = currentQuestion.questionNumber * 5;
+          const nextQuestionMinute = session.minute + currentQuestionTime + 5;
           const nextQuestionHour = session.hour + Math.floor(nextQuestionMinute / 60);
           const adjustedMinute = nextQuestionMinute % 60;
           const nextTime = formatTime(nextQuestionHour, adjustedMinute);
           announcement += `\nThe next question will be posted at ${nextTime}.`;
         } else {
-          // Announce end of session and next session time
-          const { name: nextSessionName, time: nextSessionTime, isNextDay } = getNextSessionDetails(currentQuestion.sessionName);
-          announcement += `\nThis concludes the ${currentQuestion.sessionName} session! The next session (${nextSessionName}) starts at ${nextSessionTime}${isNextDay ? ' tomorrow' : ''}.`;
+          // End of session, next session time
+          const { name: nextSessionName, time: nextSessionTime, isNextDay, nextDayName } = getNextSessionDetails(currentQuestion.sessionName);
+          announcement += `\nThis concludes the ${currentQuestion.sessionName} session! The next session (${nextSessionName}) starts at ${nextSessionTime}${isNextDay ? ` tomorrow, ${nextDayName}` : ''}.`;
         }
 
         bot.sendMessage(groupId, announcement);
         currentQuestion = null;
       } else {
-        bot.sendMessage(groupId, `Sorry, ${msg.from.first_name}, that's incorrect. Try again!`);
+        bot.sendMessage(groupId, `Sorry, ${msg.from.first_name || 'user'}, that's incorrect. Try again!`);
       }
     }
   }
