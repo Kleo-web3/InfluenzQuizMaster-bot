@@ -406,17 +406,27 @@ bot.on('message', async (ctx) => {
         const sortedScores = Object.values(scores)
           .sort((a, b) => b.points - a.points)
           .slice(0, 5);
-        let message = '🏆 *Leaderboard (Top 5)* 🏆\n\n';
-        message += 'Username         Points\n';
+        let message = '*Leaderboard \\(Top 5\\)*\n\n';
+        message += '```\n';
+        message += 'Username        Points\n';
         if (sortedScores.length === 0) {
           message += 'No scores yet.\n';
         } else {
           sortedScores.forEach((s) => {
-            message += `${s.username.padEnd(15)} ${s.points}\n`;
+            // Handle missing usernames
+            let displayName = s.username;
+            if (!displayName || !displayName.startsWith('@')) {
+              displayName = `User_${Object.keys(scores).find(key => scores[key] === s)}`;
+            }
+            // Escape all MarkdownV2 special characters
+            displayName = displayName.replace(/[_\*\[\]\(\)~`>#\+\-\|={\}\.\!]/g, '\\$&');
+            message += `${displayName.padEnd(15)} ${s.points}\n`;
           });
         }
+        message += '```';
+        console.log(`Attempting to send leaderboard message: ${message}`);
         const sentMessage = await sendMessageWithQueue(GROUP_ID, message, {
-          parse_mode: 'Markdown',
+          parse_mode: 'MarkdownV2',
           message_thread_id: THREAD_ID
         });
         activeLeaderboardMessages.add(sentMessage.message_id);
@@ -439,12 +449,13 @@ bot.on('message', async (ctx) => {
         }, 5 * 60 * 1000); // Delete after 5 minutes
         console.log('/leaderboard command processed successfully');
       } catch (error) {
+        console.error('Error in leaderboard command:', error);
         if (error.response?.error_code === 429) {
           console.log('Rate limit hit for leaderboard, retrying in 5 seconds');
           setTimeout(async () => {
             try {
               const retryMessage = await sendMessageWithQueue(GROUP_ID, message, {
-                parse_mode: 'Markdown',
+                parse_mode: 'MarkdownV2',
                 message_thread_id: THREAD_ID
               });
               console.log('/leaderboard command retried successfully');
@@ -526,18 +537,25 @@ cron.schedule('0 7,19 * * 6', async () => {
       .sort((a, b) => b.points - a.points)
       .slice(0, 5);
 
-    let message = '🏆 *Weekly Leaderboard (Top 5)* 🏆\n\n';
-    message += 'Username         Points\n';
+    let message = '*Weekly Leaderboard \\(Top 5\\)*\n\n';
+    message += '```\n';
+    message += 'Username        Points\n';
     if (sortedScores.length === 0) {
       message += 'No scores yet.\n';
     } else {
       sortedScores.forEach((s) => {
-        message += `${s.username.padEnd(15)} ${s.points}\n`;
+        let displayName = s.username;
+        if (!displayName || !displayName.startsWith('@')) {
+          displayName = `User_${Object.keys(scores).find(key => scores[key] === s)}`;
+        }
+        displayName = displayName.replace(/[_\*\[\]\(\)~`>#\+\-\|={\}\.\!]/g, '\\$&');
+        message += `${displayName.padEnd(15)} ${s.points}\n`;
       });
     }
+    message += '```';
 
     const sentMessage = await sendMessageWithQueue(GROUP_ID, message, {
-      parse_mode: 'Markdown',
+      parse_mode: 'MarkdownV2',
       message_thread_id: THREAD_ID
     });
     await bot.telegram.pinChatMessage(GROUP_ID, sentMessage.message_id, {
