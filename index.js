@@ -261,7 +261,7 @@ async function scheduleQuestions() {
     return;
   }
 
-  scheduledTasks.forEach(task => task.destroy());
+  scheduledTasks.forEach(task => task.stop()); // Use stop() instead of destroy()
   scheduledTasks = [];
 
   const sessions = [
@@ -413,12 +413,10 @@ bot.on('message', async (ctx) => {
           message += 'No scores yet.\n';
         } else {
           sortedScores.forEach((s) => {
-            // Handle missing usernames
             let displayName = s.username;
             if (!displayName || !displayName.startsWith('@')) {
               displayName = `User_${Object.keys(scores).find(key => scores[key] === s)}`;
             }
-            // Escape all MarkdownV2 special characters
             displayName = displayName.replace(/[_\*\[\]\(\)~`>#\+\-\|={\}\.\!]/g, '\\$&');
             message += `${displayName.padEnd(15)} ${s.points}\n`;
           });
@@ -596,7 +594,8 @@ process.on('SIGINT', async () => {
     isPolling = false;
     console.log('Bot stopped');
   }
-  scheduledTasks.forEach(task => task.destroy());
+  scheduledTasks.forEach(task => task.stop()); // Use stop() instead of destroy()
+  scheduledTasks = []; // Clear the array after stopping tasks
   process.exit(0);
 });
 
@@ -607,7 +606,8 @@ process.on('SIGTERM', async () => {
     isPolling = false;
     console.log('Bot stopped');
   }
-  scheduledTasks.forEach(task => task.destroy());
+  scheduledTasks.forEach(task => task.stop()); // Use stop() instead of destroy()
+  scheduledTasks = []; // Clear the array after stopping tasks
   process.exit(0);
 });
 
