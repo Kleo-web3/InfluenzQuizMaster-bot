@@ -12,17 +12,47 @@ const ADMIN_ID = '5147724876'; // Your Telegram ID
 const QUESTIONS_FILE = path.join(__dirname, 'questions.json');
 const SCORES_FILE = path.join(__dirname, 'scores.json');
 
-let scores = {}; // Store scores in memory, synced with scores.json
+// Message queue to throttle sending
+const messageQueue = [];
+let isSendingMessage = false;
+
+async function sendMessageWithQueue(chatId, text, options) {
+  return new Promise((resolve, reject) => {
+    messageQueue.push({ chatId, text, options, resolve, reject });
+    processMessageQueue();
+  });
+}
+
+async function processMessageQueue() {
+  if (isSendingMessage || messageQueue.length === 0) return;
+  isSendingMessage = true;
+
+  const { chatId, text, options, resolve, reject } = messageQueue.shift();
+  try {
+    const sentMessage = await bot.telegram.sendMessage(chatId, text, options);
+    await new Promise(resolve => setTimeout(resolve, 1000)); // 1-second delay to avoid rate limits
+    resolve(sentMessage);
+  } catch (error) {
+    reject(error);
+  } finally {
+    isSendingMessage = false;
+    processMessageQueue();
+  }
+}
+
+let scores = {};
 let questions = [];
 let currentQuestion = null;
-let firstAttempts = new Map(); // Tracks first attempt per user per question
-let firstCorrectUser = null; // Tracks first user to answer correctly
-let isPolling = false; // Prevent multiple polling instances
-let questionTimeout = null; // Tracks question timeout
-let scheduledTasks = []; // Store scheduled cron tasks to prevent duplicates
-let questionIndex = 0; // Tracks current question for sequential selection
+let firstAttempts = new Map();
+let firstCorrectUser = null;
+let isPolling = false;
+let questionTimeout = null;
+let scheduledTasks = [];
+let questionIndex = 0;
 
-// Load questions from file and shuffle once
+// Track active leaderboard messages for auto-deletion
+const activeLeaderboardMessages = new Set();
+
 async function loadQuestions() {
   try {
     const fs = require('fs').promises;
@@ -34,7 +64,7 @@ async function loadQuestions() {
     }
     const data = await fs.readFile(QUESTIONS_FILE, 'utf8');
     questions = JSON.parse(data);
-    questions = shuffleQuestions(questions); // Shuffle once at startup
+    questions = shuffleQuestions(questions);
     console.log(`Loaded and shuffled ${questions.length} questions`);
     if (questions.length < 258) {
       console.warn(`Warning: Only ${questions.length} questions loaded. Expected 258 for 43 sessions.`);
@@ -45,7 +75,6 @@ async function loadQuestions() {
   }
 }
 
-// Shuffle questions array (Fisher-Yates)
 function shuffleQuestions(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -54,7 +83,6 @@ function shuffleQuestions(array) {
   return array;
 }
 
-// Load scores from file
 async function loadScores() {
   try {
     const fs = require('fs').promises;
@@ -90,7 +118,6 @@ async function loadScores() {
   }
 }
 
-// Save scores to file
 async function saveScores() {
   try {
     const fs = require('fs').promises;
@@ -101,12 +128,10 @@ async function saveScores() {
   }
 }
 
-// Format time as HH:MM UTC
 function formatTime(hour, minute) {
   return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} UTC`;
 }
 
-// Get next session details
 function getNextSessionDetails(currentSessionName) {
   const sessions = [
     { name: 'Morning', hour: 10, minute: 0 },
@@ -118,7 +143,6 @@ function getNextSessionDetails(currentSessionName) {
   const nextSession = sessions[nextIndex];
   const isNextDay = nextIndex === 0;
 
-  // Get next day's name for Evening
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const today = new Date();
   const nextDayIndex = (today.getDay() + 1) % 7;
@@ -132,7 +156,6 @@ function getNextSessionDetails(currentSessionName) {
   };
 }
 
-// Format question for Telegram
 function formatQuestion(q) {
   return `Here’s the question: *${q.question.split(' A)')[0]}*\n` +
          `A) ${q.question.split(' A) ')[1].split(' B) ')[0]}\n` +
@@ -142,7 +165,6 @@ function formatQuestion(q) {
          `Reply with the letter (A, B, C, or D)!`;
 }
 
-// Get answer description
 function getAnswerDescription(q) {
   const options = {
     'A': q.question.split(' A) ')[1].split(' B) ')[0],
@@ -153,11 +175,10 @@ function getAnswerDescription(q) {
   return options[q.answer];
 }
 
-// Post announcement 30 minutes before session
 async function postAnnouncement(sessionTime, sessionName) {
   console.log(`Posting announcement for ${sessionName} session at ${sessionTime} UTC`);
   try {
-    await bot.telegram.sendMessage(GROUP_ID, `Quiz session (${sessionName}) with 6 questions starts in 30 minutes at ${sessionTime} UTC! Get ready!`, {
+    await sendMessageWithQueue(GROUP_ID, `Quiz session (${sessionName}) with 6 questions starts in 30 minutes at ${sessionTime} UTC! Get ready!`, {
       message_thread_id: THREAD_ID
     });
     console.log(`Announcement for ${sessionName} session posted successfully`);
@@ -166,38 +187,34 @@ async function postAnnouncement(sessionTime, sessionName) {
   }
 }
 
-// Post question and set current question
 async function postQuestion(question) {
   console.log(`Posting question: ${question.question}`);
   try {
-    await bot.telegram.sendMessage(GROUP_ID, formatQuestion(question), {
+    await sendMessageWithQueue(GROUP_ID, formatQuestion(question), {
       message_thread_id: THREAD_ID
     });
     currentQuestion = question;
-    firstAttempts.clear(); // Reset first attempts for new question
-    firstCorrectUser = null; // Reset first correct user
+    firstAttempts.clear();
+    firstCorrectUser = null;
     console.log('Question posted successfully');
 
-    // Set timeout to close question after 5 minutes
     if (questionTimeout) clearTimeout(questionTimeout);
     questionTimeout = setTimeout(async () => {
       if (currentQuestion && currentQuestion.question === question.question) {
         const answerDesc = getAnswerDescription(currentQuestion);
-        await bot.telegram.sendMessage(GROUP_ID, `Time’s up! The correct answer was ${currentQuestion.answer}: ${answerDesc}.`, {
+        await sendMessageWithQueue(GROUP_ID, `Time’s up! The correct answer was ${currentQuestion.answer}: ${answerDesc}.`, {
           message_thread_id: THREAD_ID
         });
         console.log(`Closed question: ${question.question}, Answer: ${currentQuestion.answer}`);
-        currentQuestion = null; // Close question
+        currentQuestion = null;
       }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000);
   } catch (error) {
     console.error('Error posting question:', error);
   }
 }
 
-// Schedule questions for a session (6 questions in 30 minutes)
 function scheduleSessionQuestions(sessionName, startHour, startMinute, day) {
-  // Announcement 30 minutes before session
   let announceMinute = startMinute - 30;
   let announceHour = startHour;
   if (announceMinute < 0) {
@@ -209,11 +226,9 @@ function scheduleSessionQuestions(sessionName, startHour, startMinute, day) {
   const sessionTime = formatTime(startHour, startMinute);
   console.log(`Scheduling announcement for ${sessionName} session: ${announceCron}`);
 
-  // Schedule announcement
   const announceTask = cron.schedule(announceCron, () => postAnnouncement(sessionTime, sessionName), { timezone: 'UTC' });
   scheduledTasks.push(announceTask);
 
-  // Schedule 6 questions at 5-minute intervals
   for (let i = 0; i < 6; i++) {
     const questionMinute = startMinute + i * 5;
     let questionHour = startHour + Math.floor(questionMinute / 60);
@@ -221,25 +236,23 @@ function scheduleSessionQuestions(sessionName, startHour, startMinute, day) {
     const questionCron = `${adjustedMinute} ${questionHour} * * ${day}`;
     console.log(`Scheduling question ${i + 1} for ${sessionName} session: ${questionCron}`);
     const questionTask = cron.schedule(questionCron, () => {
-      const qIndex = questionIndex + i; // Use sequential questions
+      const qIndex = questionIndex + i;
       if (questions[qIndex]) {
-        questions[qIndex].sessionName = sessionName; // Add sessionName for announcements
-        questions[qIndex].questionNumber = i + 1; // Add questionNumber
+        questions[qIndex].sessionName = sessionName;
+        questions[qIndex].questionNumber = i + 1;
         postQuestion(questions[qIndex]);
       } else {
         console.error(`No question available at index ${qIndex}`);
-        bot.telegram.sendMessage(GROUP_ID, 'Error: No more questions available. Please contact the admin.', {
+        sendMessageWithQueue(GROUP_ID, 'Error: No more questions available. Please contact the admin.', {
           message_thread_id: THREAD_ID
         });
       }
-      // Increment questionIndex after the last question in the session
       if (i === 5) questionIndex += 6;
     }, { timezone: 'UTC' });
     scheduledTasks.push(questionTask);
   }
 }
 
-// Schedule all sessions
 async function scheduleQuestions() {
   await loadQuestions();
   console.log('Scheduling questions...');
@@ -248,18 +261,15 @@ async function scheduleQuestions() {
     return;
   }
 
-  // Clear any existing scheduled tasks to prevent duplicates
   scheduledTasks.forEach(task => task.destroy());
   scheduledTasks = [];
 
-  // Define session times (in UTC): Morning (10:00), Noon (14:00), Evening (19:30)
   const sessions = [
     { name: 'Morning', hour: 10, minute: 0 },
     { name: 'Noon', hour: 14, minute: 0 },
     { name: 'Evening', hour: 19, minute: 30 }
   ];
 
-  // Schedule sessions for each weekday (Monday to Friday)
   const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   weekdays.forEach(day => {
     sessions.forEach(session => {
@@ -268,7 +278,6 @@ async function scheduleQuestions() {
   });
 }
 
-// Handle answers
 bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
   console.log(`Received answer: ${ctx.message.text}, Chat ID: ${ctx.chat.id}, Thread ID: ${ctx.message.message_thread_id}, User ID: ${ctx.from.id}`);
   if (String(ctx.chat.id) !== GROUP_ID || String(ctx.message.message_thread_id) !== THREAD_ID) {
@@ -278,7 +287,7 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
 
   if (!currentQuestion) {
     console.log('Ignoring answer: No current question active');
-    await ctx.reply('No active question right now. Wait for the next quiz!', {
+    await sendMessageWithQueue(GROUP_ID, 'No active question right now. Wait for the next quiz!', {
       message_thread_id: THREAD_ID
     });
     return;
@@ -288,38 +297,32 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
   const username = ctx.from.username ? `@${ctx.from.username}` : ctx.from.first_name || 'A user';
   const answer = ctx.message.text.trim().toUpperCase();
 
-  // Check if user has already submitted an attempt
   const attemptKey = `${userId}:${currentQuestion.question}`;
   if (firstAttempts.has(attemptKey)) {
     console.log(`User ${username} (ID: ${userId}) already attempted: ${attemptKey}`);
     return;
   }
 
-  // Record first attempt
   firstAttempts.set(attemptKey, answer);
   console.log(`Recorded first attempt: ${username} (ID: ${userId}) -> ${answer}`);
 
-  // Check answer
   try {
     if (answer === currentQuestion.answer) {
       let reply = '';
       if (firstCorrectUser === null) {
-        // First correct answer
         firstCorrectUser = userId;
         if (!scores[userId]) {
           scores[userId] = { username, points: 0 };
         }
         scores[userId].points += 1;
-        await saveScores(); // Save scores to file
+        await saveScores();
         console.log(`Score updated for ${username} (ID: ${userId}): ${scores[userId].points} points`);
         reply = `Correct, ${username}! You're the first to answer correctly and earned 1 point!`;
-        clearTimeout(questionTimeout); // Prevent time's up overlap
+        clearTimeout(questionTimeout);
       } else {
-        // Correct but not first
         reply = `Correct, ${username}, but someone else was first. Try to be quicker next time!`;
       }
 
-      // Add post-answer announcement
       if (currentQuestion.questionNumber < 6) {
         const session = [
           { name: 'Morning', hour: 10, minute: 0 },
@@ -337,19 +340,21 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
         reply = `${reply}\nThis concludes the ${currentQuestion.sessionName} session! The next session (${nextSessionName}) starts at ${nextSessionTime}${isNextDay ? ` tomorrow, ${nextDayName}` : ''}.`;
       }
 
-      await ctx.reply(reply, { message_thread_id: THREAD_ID });
+      await sendMessageWithQueue(GROUP_ID, reply, { message_thread_id: THREAD_ID });
     } else {
-      await ctx.reply(`Sorry, ${username}, that's incorrect. Try the next one!`, {
+      await sendMessageWithQueue(GROUP_ID, `Sorry, ${username}, that's incorrect. Try the next one!`, {
         message_thread_id: THREAD_ID
       });
       console.log(`Incorrect answer by ${username} (ID: ${userId})`);
     }
   } catch (error) {
     console.error(`Error handling answer for ${username} (ID: ${userId}):`, error);
+    await sendMessageWithQueue(GROUP_ID, 'Error processing answer. Please try again.', {
+      message_thread_id: THREAD_ID
+    });
   }
 });
 
-// Handle commands
 bot.on('message', async (ctx) => {
   if (!ctx.message.text || !ctx.message.text.startsWith('/')) {
     console.log(`Ignoring non-command message: ${ctx.message.text || 'no text'}`);
@@ -367,12 +372,12 @@ bot.on('message', async (ctx) => {
 
   try {
     if (commandText === 'start') {
-      await ctx.reply('Quiz bot started! Questions will be posted in the Discussion/Q and Zone topic.', {
+      await sendMessageWithQueue(GROUP_ID, 'Quiz bot started! Questions will be posted in the Discussion/Q and Zone topic.', {
         message_thread_id: THREAD_ID
       });
       console.log('/start command processed successfully');
     } else if (commandText === 'help') {
-      await ctx.reply(
+      await sendMessageWithQueue(GROUP_ID,
         'Welcome to the Influenz Quiz Bot!\n' +
         '- Questions are posted in the Discussion/Q and Zone topic (6 questions every morning, noon, and evening, Monday to Friday).\n' +
         '- Reply with A, B, C, or D to answer (5-minute time limit).\n' +
@@ -387,7 +392,7 @@ bot.on('message', async (ctx) => {
       );
       console.log('/help command processed successfully');
     } else if (commandText === 'sessions') {
-      await ctx.reply(
+      await sendMessageWithQueue(GROUP_ID,
         'Quiz Session Times (UTC, Monday–Friday):\n' +
         'Morning Session: 10:00 UTC\n' +
         'Noon Session: 14:00 UTC\n' +
@@ -397,36 +402,71 @@ bot.on('message', async (ctx) => {
       );
       console.log('/sessions command processed successfully');
     } else if (commandText === 'leaderboard') {
-      const sortedScores = Object.values(scores)
-        .sort((a, b) => b.points - a.points)
-        .slice(0, 5);
-      let message = '🏆 *Leaderboard (Top 5)* 🏆\n\n';
-      message += 'Username         Points\n';
-      if (sortedScores.length === 0) {
-        message += 'No scores yet.\n';
-      } else {
-        sortedScores.forEach((s) => {
-          message += `${s.username.padEnd(15)} ${s.points}\n`;
+      try {
+        const sortedScores = Object.values(scores)
+          .sort((a, b) => b.points - a.points)
+          .slice(0, 5);
+        let message = '🏆 *Leaderboard (Top 5)* 🏆\n\n';
+        message += 'Username         Points\n';
+        if (sortedScores.length === 0) {
+          message += 'No scores yet.\n';
+        } else {
+          sortedScores.forEach((s) => {
+            message += `${s.username.padEnd(15)} ${s.points}\n`;
+          });
+        }
+        const sentMessage = await sendMessageWithQueue(GROUP_ID, message, {
+          parse_mode: 'Markdown',
+          message_thread_id: THREAD_ID
         });
-      }
-      const sentMessage = await ctx.reply(message, {
-        parse_mode: 'Markdown',
-        message_thread_id: THREAD_ID
-      });
-      setTimeout(() => {
-        bot.telegram.deleteMessage(GROUP_ID, sentMessage.message_id).catch((error) => {
-          if (error.response?.error_code === 400) {
-            console.log('Leaderboard message already deleted, ignoring error');
-          } else {
-            console.error('Error deleting leaderboard message:', error);
+        activeLeaderboardMessages.add(sentMessage.message_id);
+        setTimeout(() => {
+          if (activeLeaderboardMessages.has(sentMessage.message_id)) {
+            bot.telegram.deleteMessage(GROUP_ID, sentMessage.message_id).catch((error) => {
+              if (error.response?.error_code === 400) {
+                console.log('Leaderboard message already deleted, ignoring error');
+              } else if (error.response?.error_code === 429) {
+                console.log('Rate limit hit while deleting leaderboard message, retrying in 5 seconds');
+                setTimeout(() => {
+                  bot.telegram.deleteMessage(GROUP_ID, sentMessage.message_id).catch(console.error);
+                }, 5000);
+              } else {
+                console.error('Error deleting leaderboard message:', error);
+              }
+            });
+            activeLeaderboardMessages.delete(sentMessage.message_id);
           }
-        });
-      }, 2 * 60 * 1000); // Delete after 2 minutes
-      console.log('/leaderboard command processed successfully');
+        }, 5 * 60 * 1000); // Delete after 5 minutes
+        console.log('/leaderboard command processed successfully');
+      } catch (error) {
+        if (error.response?.error_code === 429) {
+          console.log('Rate limit hit for leaderboard, retrying in 5 seconds');
+          setTimeout(async () => {
+            try {
+              const retryMessage = await sendMessageWithQueue(GROUP_ID, message, {
+                parse_mode: 'Markdown',
+                message_thread_id: THREAD_ID
+              });
+              console.log('/leaderboard command retried successfully');
+              activeLeaderboardMessages.add(retryMessage.message_id);
+            } catch (retryError) {
+              console.error('Error retrying leaderboard command:', retryError);
+              await sendMessageWithQueue(GROUP_ID, 'Error posting leaderboard due to rate limits. Please try again later.', {
+                message_thread_id: THREAD_ID
+              });
+            }
+          }, 5000);
+        } else {
+          console.error('Error in leaderboard command:', error);
+          await sendMessageWithQueue(GROUP_ID, 'Error posting leaderboard. Please try again.', {
+            message_thread_id: THREAD_ID
+          });
+        }
+      }
     } else if (commandText === 'checkscore') {
       const userId = ctx.from.id;
       const score = scores[userId]?.points || 0;
-      await ctx.reply(`Your current score is ${score} points.`, {
+      await sendMessageWithQueue(GROUP_ID, `Your current score is ${score} points.`, {
         message_thread_id: THREAD_ID
       });
       console.log('/checkscore command processed successfully');
@@ -436,8 +476,8 @@ bot.on('message', async (ctx) => {
         return;
       }
       scores = {};
-      await saveScores(); // Save empty scores to file
-      await ctx.reply('Leaderboard cleared!', {
+      await saveScores();
+      await sendMessageWithQueue(GROUP_ID, 'Leaderboard cleared!', {
         message_thread_id: THREAD_ID
       });
       console.log('/clearleaderboard command processed successfully');
@@ -452,7 +492,7 @@ bot.on('message', async (ctx) => {
         if (index >= 0 && index < questions.length) {
           questionToPost = questions[index];
         } else {
-          await ctx.reply(`Invalid question index. Please use a number between 1 and ${questions.length}.`, {
+          await sendMessageWithQueue(GROUP_ID, `Invalid question index. Please use a number between 1 and ${questions.length}.`, {
             message_thread_id: THREAD_ID
           });
           return;
@@ -472,7 +512,7 @@ bot.on('message', async (ctx) => {
     }
   } catch (error) {
     console.error(`Error in command ${commandText} for User ID ${ctx.from.id}:`, error);
-    await ctx.reply('Error processing command. Please try again.', {
+    await sendMessageWithQueue(GROUP_ID, 'Error processing command. Please try again.', {
       message_thread_id: THREAD_ID
     });
   }
@@ -496,16 +536,14 @@ cron.schedule('0 7,19 * * 6', async () => {
       });
     }
 
-    const sentMessage = await bot.telegram.sendMessage(GROUP_ID, message, {
+    const sentMessage = await sendMessageWithQueue(GROUP_ID, message, {
       parse_mode: 'Markdown',
       message_thread_id: THREAD_ID
     });
-    // Pin the message
     await bot.telegram.pinChatMessage(GROUP_ID, sentMessage.message_id, {
       disable_notification: true
     });
     console.log('Weekly leaderboard posted and pinned successfully');
-    // Unpin after 24 hours
     setTimeout(() => {
       bot.telegram.unpinChatMessage(GROUP_ID, sentMessage.message_id).catch(console.error);
     }, 24 * 60 * 60 * 1000); // Unpin after 24 hours
@@ -514,7 +552,6 @@ cron.schedule('0 7,19 * * 6', async () => {
   }
 }, { timezone: 'UTC' });
 
-// Start bot
 async function startBot() {
   if (isPolling) {
     console.log('Polling already active, skipping start');
@@ -522,7 +559,7 @@ async function startBot() {
   }
   isPolling = true;
   console.log('Starting bot...');
-  await loadScores(); // Load scores before scheduling
+  await loadScores();
   await scheduleQuestions();
   try {
     await bot.launch({ dropPendingUpdates: true });
@@ -534,7 +571,6 @@ async function startBot() {
   }
 }
 
-// Stop polling on process exit
 process.on('SIGINT', async () => {
   console.log('Received SIGINT, stopping bot...');
   if (isPolling) {
@@ -557,7 +593,6 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-// Express server for Render
 const app = express();
 app.get('/', (req, res) => res.send('Bot is running'));
 app.listen(process.env.PORT || 10000, () => console.log(`Server running on port ${process.env.PORT || 10000}`));
