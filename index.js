@@ -53,6 +53,16 @@ let questionIndex = 0;
 // Track active leaderboard messages for auto-deletion
 const activeLeaderboardMessages = new Set();
 
+async function saveQuestions() {
+  try {
+    const fs = require('fs').promises;
+    await fs.writeFile(QUESTIONS_FILE, JSON.stringify(questions, null, 2));
+    console.log('Questions saved successfully');
+  } catch (error) {
+    console.error('Error saving questions:', error);
+  }
+}
+
 async function loadQuestions() {
   try {
     const fs = require('fs').promises;
@@ -63,7 +73,64 @@ async function loadQuestions() {
       return;
     }
     const data = await fs.readFile(QUESTIONS_FILE, 'utf8');
-    questions = JSON.parse(data);
+    let loadedQuestions = JSON.parse(data);
+
+    // Check if questions are in the old format (question string with embedded options)
+    const isOldFormat = loadedQuestions.length > 0 && typeof loadedQuestions[0].question === 'string' && loadedQuestions[0].question.includes(' A) ');
+
+    if (isOldFormat) {
+      console.log('Detected old question format, restructuring and randomizing answers...');
+      loadedQuestions = loadedQuestions.map(q => {
+        // Extract question and options
+        const questionText = q.question.split(' A)')[0];
+        const optionsText = q.question.split(' A) ')[1];
+        const optionA = optionsText.split(' B) ')[0];
+        const optionB = optionsText.split(' B) ')[1].split(' C) ')[0];
+        const optionC = optionsText.split(' C) ')[1].split(' D) ')[0];
+        const optionD = optionsText.split(' D) ')[1];
+
+        const optionsArray = [
+          { label: 'A', text: optionA },
+          { label: 'B', text: optionB },
+          { label: 'C', text: optionC },
+          { label: 'D', text: optionD }
+        ];
+
+        // Determine the correct option
+        const correctOption = optionsArray.find(opt => opt.label === q.answer);
+        if (!correctOption) {
+          console.error(`Invalid answer for question: ${questionText}`);
+          return null;
+        }
+
+        // Shuffle options
+        const shuffledOptions = shuffleArray([...optionsArray]);
+        const newCorrectOption = shuffledOptions.find(opt => opt.text === correctOption.text);
+        const newAnswer = newCorrectOption.label;
+
+        // Create new question format
+        const newQuestion = {
+          question: questionText,
+          options: {
+            A: shuffledOptions[0].text,
+            B: shuffledOptions[1].text,
+            C: shuffledOptions[2].text,
+            D: shuffledOptions[3].text
+          },
+          answer: newAnswer
+        };
+
+        return newQuestion;
+      }).filter(q => q !== null);
+
+      // Save the restructured questions
+      questions = loadedQuestions;
+      await saveQuestions();
+      console.log('Restructured questions saved with randomized answers');
+    } else {
+      questions = loadedQuestions;
+    }
+
     questions = shuffleQuestions(questions);
     console.log(`Loaded and shuffled ${questions.length} questions`);
     if (questions.length < 258) {
@@ -75,12 +142,16 @@ async function loadQuestions() {
   }
 }
 
-function shuffleQuestions(array) {
+function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
+}
+
+function shuffleQuestions(array) {
+  return shuffleArray(array);
 }
 
 async function loadScores() {
@@ -157,22 +228,17 @@ function getNextSessionDetails(currentSessionName) {
 }
 
 function formatQuestion(q) {
-  return `Here’s the question: *${q.question.split(' A)')[0]}*\n` +
-         `A) ${q.question.split(' A) ')[1].split(' B) ')[0]}\n` +
-         `B) ${q.question.split(' B) ')[1].split(' C) ')[0]}\n` +
-         `C) ${q.question.split(' C) ')[1].split(' D) ')[0]}\n` +
-         `D) ${q.question.split(' D) ')[1]}\n` +
-         `Reply with the letter (A, B, C, or D)!`;
+  let message = `Here’s the question: *${q.question}*\n`;
+  message += `A) ${q.options.A}\n`;
+  message += `B) ${q.options.B}\n`;
+  message += `C) ${q.options.C}\n`;
+  message += `D) ${q.options.D}\n`;
+  message += `Reply with the letter (A, B, C, or D)!`;
+  return message;
 }
 
 function getAnswerDescription(q) {
-  const options = {
-    'A': q.question.split(' A) ')[1].split(' B) ')[0],
-    'B': q.question.split(' B) ')[1].split(' C) ')[0],
-    'C': q.question.split(' C) ')[1].split(' D) ')[0],
-    'D': q.question.split(' D) ')[1]
-  };
-  return options[q.answer];
+  return q.options[q.answer];
 }
 
 async function postAnnouncement(sessionTime, sessionName) {
@@ -261,7 +327,7 @@ async function scheduleQuestions() {
     return;
   }
 
-  scheduledTasks.forEach(task => task.stop()); // Use stop() instead of destroy()
+  scheduledTasks.forEach(task => task.stop());
   scheduledTasks = [];
 
   const sessions = [
@@ -508,7 +574,13 @@ bot.on('message', async (ctx) => {
         }
       } else {
         questionToPost = {
-          question: 'Test question? A) A B) B C) C D) D',
+          question: 'Test question?',
+          options: {
+            A: 'A',
+            B: 'B',
+            C: 'C',
+            D: 'D'
+          },
           answer: 'C',
           time: 'now'
         };
@@ -594,8 +666,8 @@ process.on('SIGINT', async () => {
     isPolling = false;
     console.log('Bot stopped');
   }
-  scheduledTasks.forEach(task => task.stop()); // Use stop() instead of destroy()
-  scheduledTasks = []; // Clear the array after stopping tasks
+  scheduledTasks.forEach(task => task.stop());
+  scheduledTasks = [];
   process.exit(0);
 });
 
@@ -606,8 +678,8 @@ process.on('SIGTERM', async () => {
     isPolling = false;
     console.log('Bot stopped');
   }
-  scheduledTasks.forEach(task => task.stop()); // Use stop() instead of destroy()
-  scheduledTasks = []; // Clear the array after stopping tasks
+  scheduledTasks.forEach(task => task.stop());
+  scheduledTasks = [];
   process.exit(0);
 });
 
