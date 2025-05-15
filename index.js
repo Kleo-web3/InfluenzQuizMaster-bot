@@ -60,6 +60,7 @@ async function saveQuestions() {
     console.log('Questions saved successfully');
   } catch (error) {
     console.error('Error saving questions:', error);
+    throw error; // Rethrow to handle in caller
   }
 }
 
@@ -81,7 +82,6 @@ async function loadQuestions() {
     if (isOldFormat) {
       console.log('Detected old question format, restructuring and randomizing answers...');
       loadedQuestions = loadedQuestions.map(q => {
-        // Extract question and options
         const questionText = q.question.split(' A)')[0];
         const optionsText = q.question.split(' A) ')[1];
         const optionA = optionsText.split(' B) ')[0];
@@ -96,7 +96,6 @@ async function loadQuestions() {
           { label: 'D', text: optionD }
         ];
 
-        // Determine the correct option
         const correctOption = optionsArray.find(opt => opt.label === q.answer);
         if (!correctOption) {
           console.error(`Invalid answer for question: ${questionText}`);
@@ -108,8 +107,7 @@ async function loadQuestions() {
         const newCorrectOption = shuffledOptions.find(opt => opt.text === correctOption.text);
         const newAnswer = newCorrectOption.label;
 
-        // Create new question format
-        const newQuestion = {
+        return {
           question: questionText,
           options: {
             A: shuffledOptions[0].text,
@@ -119,17 +117,51 @@ async function loadQuestions() {
           },
           answer: newAnswer
         };
-
-        return newQuestion;
       }).filter(q => q !== null);
-
-      // Save the restructured questions
-      questions = loadedQuestions;
-      await saveQuestions();
-      console.log('Restructured questions saved with randomized answers');
     } else {
-      questions = loadedQuestions;
+      console.log('Questions already in new format, randomizing answers...');
+      loadedQuestions = loadedQuestions.map(q => {
+        const optionsArray = [
+          { label: 'A', text: q.options.A },
+          { label: 'B', text: q.options.B },
+          { label: 'C', text: q.options.C },
+          { label: 'D', text: q.options.D }
+        ];
+
+        const correctOption = optionsArray.find(opt => opt.label === q.answer);
+        if (!correctOption) {
+          console.error(`Invalid answer for question: ${q.question}`);
+          return null;
+        }
+
+        // Shuffle options
+        const shuffledOptions = shuffleArray([...optionsArray]);
+        const newCorrectOption = shuffledOptions.find(opt => opt.text === correctOption.text);
+        const newAnswer = newCorrectOption.label;
+
+        return {
+          question: q.question,
+          options: {
+            A: shuffledOptions[0].text,
+            B: shuffledOptions[1].text,
+            C: shuffledOptions[2].text,
+            D: shuffledOptions[3].text
+          },
+          answer: newAnswer
+        };
+      }).filter(q => q !== null);
     }
+
+    // Save the restructured/randomized questions
+    questions = loadedQuestions;
+    await saveQuestions();
+
+    // Log the distribution of answers
+    const answerDistribution = { A: 0, B: 0, C: 0, D: 0 };
+    questions.forEach(q => {
+      answerDistribution[q.answer]++;
+    });
+    console.log('Answer distribution after randomization:', answerDistribution);
 
     questions = shuffleQuestions(questions);
     console.log(`Loaded and shuffled ${questions.length} questions`);
