@@ -60,21 +60,32 @@ async function saveQuestions() {
     console.log('Questions saved successfully');
   } catch (error) {
     console.error('Error saving questions:', error);
-    throw error; // Rethrow to handle in caller
+    throw error;
   }
 }
 
 async function loadQuestions() {
   try {
     const fs = require('fs').promises;
+    console.log('Checking if questions.json exists...');
     const exists = await fs.access(QUESTIONS_FILE).then(() => true).catch(() => false);
     if (!exists) {
       console.error('questions.json does not exist');
       questions = [];
       return;
     }
+
+    console.log('Reading questions.json...');
     const data = await fs.readFile(QUESTIONS_FILE, 'utf8');
+    if (!data.trim()) {
+      console.error('questions.json is empty');
+      questions = [];
+      return;
+    }
+
+    console.log('Parsing questions.json...');
     let loadedQuestions = JSON.parse(data);
+    console.log(`Loaded ${loadedQuestions.length} questions from questions.json`);
 
     // Check if questions are in the old format (question string with embedded options)
     const isOldFormat = loadedQuestions.length > 0 && typeof loadedQuestions[0].question === 'string' && loadedQuestions[0].question.includes(' A) ');
@@ -105,6 +116,10 @@ async function loadQuestions() {
         // Shuffle options
         const shuffledOptions = shuffleArray([...optionsArray]);
         const newCorrectOption = shuffledOptions.find(opt => opt.text === correctOption.text);
+        if (!newCorrectOption) {
+          console.error(`Failed to find new correct option for question: ${questionText}`);
+          return null;
+        }
         const newAnswer = newCorrectOption.label;
 
         return {
@@ -121,6 +136,11 @@ async function loadQuestions() {
     } else {
       console.log('Questions already in new format, randomizing answers...');
       loadedQuestions = loadedQuestions.map(q => {
+        if (!q.options || !q.answer) {
+          console.error(`Invalid question format: ${JSON.stringify(q)}`);
+          return null;
+        }
+
         const optionsArray = [
           { label: 'A', text: q.options.A },
           { label: 'B', text: q.options.B },
@@ -137,6 +157,10 @@ async function loadQuestions() {
         // Shuffle options
         const shuffledOptions = shuffleArray([...optionsArray]);
         const newCorrectOption = shuffledOptions.find(opt => opt.text === correctOption.text);
+        if (!newCorrectOption) {
+          console.error(`Failed to find new correct option for question: ${q.question}`);
+          return null;
+        }
         const newAnswer = newCorrectOption.label;
 
         return {
@@ -152,8 +176,11 @@ async function loadQuestions() {
       }).filter(q => q !== null);
     }
 
+    console.log(`Processed ${loadedQuestions.length} questions after randomization`);
+
     // Save the restructured/randomized questions
     questions = loadedQuestions;
+    console.log('Saving randomized questions...');
     await saveQuestions();
 
     // Log the distribution of answers
@@ -163,6 +190,10 @@ async function loadQuestions() {
     });
     console.log('Answer distribution after randomization:', answerDistribution);
 
+    if (Object.values(answerDistribution).every(count => count === 0)) {
+      console.error('No valid answers found after randomization. Check questions.json format.');
+    }
+
     questions = shuffleQuestions(questions);
     console.log(`Loaded and shuffled ${questions.length} questions`);
     if (questions.length < 258) {
@@ -171,6 +202,7 @@ async function loadQuestions() {
   } catch (error) {
     console.error('Error loading questions:', error);
     questions = [];
+    throw error; // Rethrow to fail startup and alert us to the issue
   }
 }
 
@@ -618,6 +650,7 @@ bot.on('message', async (ctx) => {
         };
       }
       console.log(`Posting test question: ${questionToPost.question}`);
+      console.log(`Correct answer: ${questionToPost.answer}`);
       await postQuestion(questionToPost);
       console.log('/testquestion command processed successfully');
     } else {
