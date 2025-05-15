@@ -4,7 +4,7 @@ const { Telegraf } = require('telegraf');
 const cron = require('node-cron');
 const path = require('path');
 const express = require('express');
-const fs = require('fs').promises; // Move fs import to top-level
+const fs = require('fs').promises;
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const GROUP_ID = process.env.GROUP_ID || '-1002288817447';
@@ -31,7 +31,7 @@ async function processMessageQueue() {
   const { chatId, text, options, resolve, reject } = messageQueue.shift();
   try {
     const sentMessage = await bot.telegram.sendMessage(chatId, text, options);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // 1-second delay to avoid rate limits
+    await new Promise(resolve => setTimeout(resolve, 1000)); // 1-second delay
     resolve(sentMessage);
   } catch (error) {
     reject(error);
@@ -51,7 +51,6 @@ let questionTimeout = null;
 let scheduledTasks = [];
 let questionIndex = 0;
 
-// Track active leaderboard messages for auto-deletion
 const activeLeaderboardMessages = new Set();
 
 async function saveQuestions() {
@@ -60,159 +59,179 @@ async function saveQuestions() {
     console.log('Questions saved successfully');
   } catch (error) {
     console.error('Error saving questions:', error);
-    throw error;
   }
 }
 
 async function loadQuestions() {
   console.log('Starting loadQuestions...');
-  questions = []; // Reset questions array at the start
+  questions = [];
   try {
-    console.log('Checking if questions.json exists...');
     const exists = await fs.access(QUESTIONS_FILE).then(() => true).catch(() => false);
     if (!exists) {
       console.error('questions.json does not exist');
-      questions = [];
+      await fs.writeFile(QUESTIONS_FILE, '[]');
       return;
     }
 
-    console.log('Reading questions.json...');
     const data = await fs.readFile(QUESTIONS_FILE, 'utf8');
     if (!data.trim()) {
       console.error('questions.json is empty');
-      questions = [];
+      await fs.writeFile(QUESTIONS_FILE, '[]');
       return;
     }
 
-    console.log('Parsing questions.json...');
     let loadedQuestions = JSON.parse(data);
     console.log(`Loaded ${loadedQuestions.length} questions from questions.json`);
 
-    // Check if questions are in the old format (question string with embedded options)
     const isOldFormat = loadedQuestions.length > 0 && typeof loadedQuestions[0].question === 'string' && loadedQuestions[0].question.includes(' A) ');
 
-    if (isOldFormat) {
-      console.log('Detected old question format, restructuring and randomizing answers...');
-      loadedQuestions = loadedQuestions.map(q => {
-        const questionText = q.question.split(' A)')[0];
-        const optionsText = q.question.split(' A) ')[1];
-        const optionA = optionsText.split(' B) ')[0];
-        const optionB = optionsText.split(' B) ')[1].split(' C) ')[0];
-        const optionC = optionsText.split(' C) ')[1].split(' D) ')[0];
-        const optionD = optionsText.split(' D) ')[1];
+    let processedQuestions = loadedQuestions.map((q, index) => {
+      let questionText, optionsArray, correctOption;
 
-        const optionsArray = [
-          { label: 'A', text: optionA },
-          { label: 'B', text: optionB },
-          { label: 'C', text: optionC },
-          { label: 'D', text: optionD }
-        ];
+      if (isOldFormat) {
+        try {
+          questionText = q.question.split(' A) ')[0];
+          const optionsText = q.question.split(' A) ')[1];
+          const optionA = optionsText.split(' B) ')[0];
+          const optionB = optionsText.split(' B) ')[1].split(' C) ')[0];
+          const optionC = optionsText.split(' C) ')[1].split(' D) ')[0];
+          const optionD = optionsText.split(' D) ')[1];
 
-        const correctOption = optionsArray.find(opt => opt.label === q.answer);
-        if (!correctOption) {
-          console.error(`Invalid answer for question: ${questionText}`);
+          optionsArray = [
+            { label: 'A', text: optionA },
+            { label: 'B', text: optionB },
+            { label: 'C', text: optionC },
+            { label: 'D', text: optionD },
+          ];
+          correctOption = optionsArray.find(opt => opt.label === q.answer);
+          if (!correctOption) {
+            console.error(`Invalid answer for question ${index + 1}: ${questionText}`);
+            return null;
+          }
+        } catch (error) {
+          console.error(`Error parsing old format question ${index + 1}:`, error);
           return null;
         }
-
-        // Shuffle options
-        const shuffledOptions = shuffleArray([...optionsArray]);
-        const newCorrectOption = shuffledOptions.find(opt => opt.text === correctOption.text);
-        if (!newCorrectOption) {
-          console.error(`Failed to find new correct option for question: ${questionText}`);
+      } else {
+        if (!q.options || !q.answer || !['A', 'B', 'C', 'D'].includes(q.answer)) {
+          console.error(`Invalid question format for question ${index + 1}: ${JSON.stringify(q)}`);
           return null;
         }
-        const newAnswer = newCorrectOption.label;
-
-        return {
-          question: questionText,
-          options: {
-            A: shuffledOptions[0].text,
-            B: shuffledOptions[1].text,
-            C: shuffledOptions[2].text,
-            D: shuffledOptions[3].text
-          },
-          answer: newAnswer
-        };
-      }).filter(q => q !== null);
-    } else {
-      console.log('Questions already in new format, randomizing answers...');
-      loadedQuestions = loadedQuestions.map(q => {
-        if (!q.options || !q.answer) {
-          console.error(`Invalid question format: ${JSON.stringify(q)}`);
-          return null;
-        }
-
-        const optionsArray = [
+        questionText = q.question;
+        optionsArray = [
           { label: 'A', text: q.options.A },
           { label: 'B', text: q.options.B },
           { label: 'C', text: q.options.C },
-          { label: 'D', text: q.options.D }
+          { label: 'D', text: q.options.D },
         ];
-
-        const correctOption = optionsArray.find(opt => opt.label === q.answer);
+        correctOption = optionsArray.find(opt => opt.label === q.answer);
         if (!correctOption) {
-          console.error(`Invalid answer for question: ${q.question}`);
+          console.error(`Invalid answer for question ${index + 1}: ${q.question}`);
           return null;
         }
+      }
 
-        // Shuffle options
-        const shuffledOptions = shuffleArray([...optionsArray]);
+      return { questionText, optionsArray, correctOption };
+    }).filter(q => q !== null);
+
+    console.log(`Processed ${processedQuestions.length} questions`);
+
+    // Rebalance answers
+    const targetCount = Math.floor(processedQuestions.length / 4);
+    const answerOptions = ['A', 'B', 'C', 'D'];
+    const finalQuestions = [];
+    const usedIndices = new Set();
+
+    for (const targetAnswer of answerOptions) {
+      let count = 0;
+      while (count < targetCount && processedQuestions.length > 0) {
+        const index = Math.floor(Math.random() * processedQuestions.length);
+        if (usedIndices.has(index)) continue;
+        usedIndices.add(index);
+
+        const { questionText, optionsArray, correctOption } = processedQuestions[index];
+
+        const shuffledOptions = shuffleArray(optionsArray);
+        const correctIndex = shuffledOptions.findIndex(opt => opt.text === correctOption.text);
+        if (correctIndex === -1) {
+          console.error(`Failed to find correct option for question ${index + 1}: ${questionText}`);
+          continue;
+        }
+
+        const targetIndex = answerOptions.indexOf(targetAnswer);
+        [shuffledOptions[correctIndex], shuffledOptions[targetIndex]] = [shuffledOptions[targetIndex], shuffledOptions[correctIndex]];
+        shuffledOptions.forEach((opt, i) => opt.label = answerOptions[i]);
+
+        const newOptions = {
+          A: shuffledOptions[0].text,
+          B: shuffledOptions[1].text,
+          C: shuffledOptions[2].text,
+          D: shuffledOptions[3].text,
+        };
+
+        finalQuestions.push({
+          question: questionText,
+          options: newOptions,
+          answer: targetAnswer,
+        });
+
+        count++;
+      }
+    }
+
+    processedQuestions.forEach((q, index) => {
+      if (!usedIndices.has(index)) {
+        const { questionText, optionsArray, correctOption } = q;
+        const shuffledOptions = shuffleArray(optionsArray);
         const newCorrectOption = shuffledOptions.find(opt => opt.text === correctOption.text);
         if (!newCorrectOption) {
-          console.error(`Failed to find new correct option for question: ${q.question}`);
-          return null;
+          console.error(`Failed to find new correct option for question ${index + 1}: ${questionText}`);
+          return;
         }
-        const newAnswer = newCorrectOption.label;
 
-        return {
-          question: q.question,
-          options: {
-            A: shuffledOptions[0].text,
-            B: shuffledOptions[1].text,
-            C: shuffledOptions[2].text,
-            D: shuffledOptions[3].text
-          },
-          answer: newAnswer
+        const newOptions = {
+          A: shuffledOptions[0].text,
+          B: shuffledOptions[1].text,
+          C: shuffledOptions[2].text,
+          D: shuffledOptions[3].text,
         };
-      }).filter(q => q !== null);
-    }
 
-    console.log(`Processed ${loadedQuestions.length} questions after randomization`);
+        finalQuestions.push({
+          question: questionText,
+          options: newOptions,
+          answer: newCorrectOption.label,
+        });
+      }
+    });
 
-    // Save the restructured/randomized questions
-    questions = loadedQuestions;
-    console.log('Saving randomized questions...');
-    await saveQuestions();
+    questions = shuffleQuestions(finalQuestions);
+    console.log(`Finalized ${questions.length} questions`);
 
-    // Log the distribution of answers
     const answerDistribution = { A: 0, B: 0, C: 0, D: 0 };
     questions.forEach(q => {
-      answerDistribution[q.answer]++;
+      if (q.answer) answerDistribution[q.answer]++;
     });
-    console.log('Answer distribution after randomization:', answerDistribution);
+    console.log('Answer distribution after rebalancing:', answerDistribution);
 
-    if (Object.values(answerDistribution).every(count => count === 0)) {
-      console.error('No valid answers found after randomization. Check questions.json format.');
-    }
+    await saveQuestions();
+    console.log(`Saved ${questions.length} questions in new format`);
 
-    questions = shuffleQuestions(questions);
-    console.log(`Loaded and shuffled ${questions.length} questions`);
     if (questions.length < 258) {
       console.warn(`Warning: Only ${questions.length} questions loaded. Expected 258 for 43 sessions.`);
     }
   } catch (error) {
     console.error('Error in loadQuestions:', error);
     questions = [];
-    throw error;
   }
 }
 
 function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+    [result[i], result[j]] = [result[j], result[i]];
   }
-  return array;
+  return result;
 }
 
 function shuffleQuestions(array) {
@@ -245,11 +264,9 @@ async function loadScores() {
     scores = parsedScores;
     console.log(`Loaded scores:`, JSON.stringify(scores, null, 2));
   } catch (error) {
-    console.error('Error loading scores, keeping existing scores:', error);
-    if (!scores || typeof scores !== 'object' || Array.isArray(scores)) {
-      scores = {};
-      await saveScores();
-    }
+    console.error('Error loading scores:', error);
+    scores = {};
+    await saveScores();
   }
 }
 
@@ -408,7 +425,6 @@ async function scheduleQuestions() {
     });
   } catch (error) {
     console.error('Error in scheduleQuestions:', error);
-    throw error;
   }
 }
 
@@ -578,7 +594,7 @@ bot.on('message', async (ctx) => {
             });
             activeLeaderboardMessages.delete(sentMessage.message_id);
           }
-        }, 5 * 60 * 1000); // Delete after 5 minutes
+        }, 5 * 60 * 1000);
         console.log('/leaderboard command processed successfully');
       } catch (error) {
         console.error('Error in leaderboard command:', error);
@@ -668,7 +684,6 @@ bot.on('message', async (ctx) => {
   }
 });
 
-// Weekly leaderboard on Saturday
 cron.schedule('0 7,19 * * 6', async () => {
   console.log('Posting weekly leaderboard');
   try {
@@ -703,7 +718,7 @@ cron.schedule('0 7,19 * * 6', async () => {
     console.log('Weekly leaderboard posted and pinned successfully');
     setTimeout(() => {
       bot.telegram.unpinChatMessage(GROUP_ID, sentMessage.message_id).catch(console.error);
-    }, 24 * 60 * 60 * 1000); // Unpin after 24 hours
+    }, 24 * 60 * 60 * 1000);
   } catch (error) {
     console.error('Error posting weekly leaderboard:', error);
   }
