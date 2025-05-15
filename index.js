@@ -4,6 +4,7 @@ const { Telegraf } = require('telegraf');
 const cron = require('node-cron');
 const path = require('path');
 const express = require('express');
+const fs = require('fs').promises; // Move fs import to top-level
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const GROUP_ID = process.env.GROUP_ID || '-1002288817447';
@@ -55,7 +56,6 @@ const activeLeaderboardMessages = new Set();
 
 async function saveQuestions() {
   try {
-    const fs = require('fs').promises;
     await fs.writeFile(QUESTIONS_FILE, JSON.stringify(questions, null, 2));
     console.log('Questions saved successfully');
   } catch (error) {
@@ -65,8 +65,9 @@ async function saveQuestions() {
 }
 
 async function loadQuestions() {
+  console.log('Starting loadQuestions...');
+  questions = []; // Reset questions array at the start
   try {
-    const fs = require('fs').promises;
     console.log('Checking if questions.json exists...');
     const exists = await fs.access(QUESTIONS_FILE).then(() => true).catch(() => false);
     if (!exists) {
@@ -200,9 +201,9 @@ async function loadQuestions() {
       console.warn(`Warning: Only ${questions.length} questions loaded. Expected 258 for 43 sessions.`);
     }
   } catch (error) {
-    console.error('Error loading questions:', error);
+    console.error('Error in loadQuestions:', error);
     questions = [];
-    throw error; // Rethrow to fail startup and alert us to the issue
+    throw error;
   }
 }
 
@@ -220,7 +221,6 @@ function shuffleQuestions(array) {
 
 async function loadScores() {
   try {
-    const fs = require('fs').promises;
     const exists = await fs.access(SCORES_FILE).then(() => true).catch(() => false);
     if (!exists) {
       console.log('scores.json does not exist, initializing empty scores');
@@ -255,7 +255,6 @@ async function loadScores() {
 
 async function saveScores() {
   try {
-    const fs = require('fs').promises;
     await fs.writeFile(SCORES_FILE, JSON.stringify(scores, null, 2));
     console.log('Scores saved successfully');
   } catch (error) {
@@ -369,7 +368,7 @@ function scheduleSessionQuestions(sessionName, startHour, startMinute, day) {
       const qIndex = questionIndex + i;
       if (questions[qIndex]) {
         questions[qIndex].sessionName = sessionName;
-        questions[qIndex].questionNumber = i + 1;
+        questions[qIndex].sessionNumber = i + 1;
         postQuestion(questions[qIndex]);
       } else {
         console.error(`No question available at index ${qIndex}`);
@@ -384,28 +383,33 @@ function scheduleSessionQuestions(sessionName, startHour, startMinute, day) {
 }
 
 async function scheduleQuestions() {
-  await loadQuestions();
-  console.log('Scheduling questions...');
-  if (questions.length < 6) {
-    console.error('Not enough questions to schedule (need at least 6)');
-    return;
-  }
+  try {
+    await loadQuestions();
+    console.log('Scheduling questions...');
+    if (questions.length < 6) {
+      console.error('Not enough questions to schedule (need at least 6)');
+      return;
+    }
 
-  scheduledTasks.forEach(task => task.stop());
-  scheduledTasks = [];
+    scheduledTasks.forEach(task => task.stop());
+    scheduledTasks = [];
 
-  const sessions = [
-    { name: 'Morning', hour: 10, minute: 0 },
-    { name: 'Noon', hour: 14, minute: 0 },
-    { name: 'Evening', hour: 19, minute: 30 }
-  ];
+    const sessions = [
+      { name: 'Morning', hour: 10, minute: 0 },
+      { name: 'Noon', hour: 14, minute: 0 },
+      { name: 'Evening', hour: 19, minute: 30 }
+    ];
 
-  const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  weekdays.forEach(day => {
-    sessions.forEach(session => {
-      scheduleSessionQuestions(session.name, session.hour, session.minute, day);
+    const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    weekdays.forEach(day => {
+      sessions.forEach(session => {
+        scheduleSessionQuestions(session.name, session.hour, session.minute, day);
+      });
     });
-  });
+  } catch (error) {
+    console.error('Error in scheduleQuestions:', error);
+    throw error;
+  }
 }
 
 bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
@@ -453,13 +457,13 @@ bot.hears(['A', 'B', 'C', 'D'], async (ctx) => {
         reply = `Correct, ${username}, but someone else was first. Try to be quicker next time!`;
       }
 
-      if (currentQuestion.questionNumber < 6) {
+      if (currentQuestion.sessionNumber < 6) {
         const session = [
           { name: 'Morning', hour: 10, minute: 0 },
           { name: 'Noon', hour: 14, minute: 0 },
           { name: 'Evening', hour: 19, minute: 30 }
         ].find(s => s.name === currentQuestion.sessionName);
-        const currentQuestionTime = currentQuestion.questionNumber * 5;
+        const currentQuestionTime = currentQuestion.sessionNumber * 5;
         const nextQuestionMinute = session.minute + currentQuestionTime + 5;
         const nextQuestionHour = session.hour + Math.floor(nextQuestionMinute / 60);
         const adjustedMinute = nextQuestionMinute % 60;
@@ -712,9 +716,9 @@ async function startBot() {
   }
   isPolling = true;
   console.log('Starting bot...');
-  await loadScores();
-  await scheduleQuestions();
   try {
+    await loadScores();
+    await scheduleQuestions();
     await bot.launch({ dropPendingUpdates: true });
     console.log('Bot started with polling');
   } catch (error) {
@@ -752,4 +756,7 @@ const app = express();
 app.get('/', (req, res) => res.send('Bot is running'));
 app.listen(process.env.PORT || 10000, () => console.log(`Server running on port ${process.env.PORT || 10000}`));
 
-startBot().catch(console.error);
+startBot().catch(error => {
+  console.error('Error starting bot:', error);
+  process.exit(1);
+});
