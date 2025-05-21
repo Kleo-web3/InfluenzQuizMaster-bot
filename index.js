@@ -5,6 +5,9 @@ const cron = require('node-cron');
 const path = require('path');
 const express = require('express');
 const fs = require('fs').promises;
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const GROUP_ID = process.env.GROUP_ID || '-1002288817447';
@@ -94,7 +97,7 @@ async function loadQuestions() {
           const optionsText = q.question.split(' A) ')[1];
           const optionA = optionsText.split(' B) ')[0];
           const optionB = optionsText.split(' B) ')[1].split(' C) ')[0];
-          const optionC = optionsText.split(' C) ')[1].split(' D) ')[0];
+          const optionC = optionsText.split(' C) ')[1].split(' D) ')[1];
           const optionD = optionsText.split(' D) ')[1];
 
           optionsArray = [
@@ -274,8 +277,20 @@ async function saveScores() {
   try {
     await fs.writeFile(SCORES_FILE, JSON.stringify(scores, null, 2));
     console.log('Scores saved successfully');
+    await commitAndPushScores();
   } catch (error) {
     console.error('Error saving scores:', error);
+  }
+}
+
+async function commitAndPushScores() {
+  try {
+    await execPromise('git add scores.json', { cwd: __dirname });
+    await execPromise('git commit -m "Update scores.json with latest scores"', { cwd: __dirname });
+    await execPromise('git push origin main', { cwd: __dirname });
+    console.log('Successfully committed and pushed scores.json');
+  } catch (error) {
+    console.error('Error committing and pushing scores.json:', error);
   }
 }
 
